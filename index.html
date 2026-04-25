@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>通信原理交互式仿真实验平台</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo-area">
+        <div class="logo-icon">📡</div>
+        <div>
+          <h1 class="site-title">通信原理仿真实验平台</h1>
+          <p class="site-subtitle">电子信息类专业 · 应用型本科 · Web交互式仿真</p>
+        </div>
+      </div>
+      <div class="header-info">
+        <span class="badge">6 个实验模块</span>
+        <span class="badge">实时仿真</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <section class="intro-section">
+      <div class="intro-card">
+        <h2>课程简介</h2>
+        <p>
+          本平台覆盖通信原理课程核心知识点，每个实验模块包含<strong>理论背景、参数调节、实时波形/频谱仿真</strong>与结果分析。
+          学生可在浏览器中直接完成仿真，无需安装任何软件。
+        </p>
+        <div class="intro-tags">
+          <span>模拟调制解调</span><span>数字基带传输</span><span>数字调制解调</span>
+          <span>抽样定理</span><span>PCM编码</span><span>信道与误码率</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="labs-section">
+      <h2 class="section-title">实验模块</h2>
+      <div class="labs-grid">
+
+        <a class="lab-card" href="labs/analog-mod.html">
+          <div class="lab-card-header" style="background: linear-gradient(135deg,#3b82f6,#1d4ed8)">
+            <span class="lab-icon">〰️</span>
+            <span class="lab-num">实验一</span>
+          </div>
+          <div class="lab-card-body">
+            <h3>模拟调制与解调</h3>
+            <p>AM、DSB-SC、FM 调制仿真，观察时域波形与频谱，调节调制度参数。</p>
+            <ul class="lab-points">
+              <li>幅度调制 AM / DSB-SC</li>
+              <li>频率调制 FM</li>
+              <li>调制指数对频谱影响</li>
+              <li>包络检波 / 相干解调</li>
+            </ul>
+            <span class="lab-btn">进入实验 →</span>
+          </div>
+        </a>
+
+        <a class="lab-card" href="labs/baseband.html">
+          <div class="lab-card-header" style="background: linear-gradient(135deg,#10b981,#065f46)">
+            <span class="lab-icon">⬛</span>
+            <span class="lab-num">实验二</span>
+          </div>
+          <div class="lab-card-body">
+            <h3>数字基带传输</h3>
+            <p>NRZ、RZ、差分曼彻斯特等码型编码，观察眼图与功率谱密度。</p>
+            <ul class="lab-points">
+              <li>单极性 / 双极性 NRZ</li>
+              <li>归零码 RZ</li>
+              <li>曼彻斯特编码</li>
+              <li>功率谱密度分析</li>
+            </ul>
+            <span class="lab-btn">进入实验 →</span>
+          </div>
+        </a>
+
+        <a class="lab-card" href="labs/digital-mod.html">
+          <div class="lab-card-header" style="background: linear-gradient(135deg,#8b5cf6,#4c1d95)">
+            <span class="lab-icon">📶</span>
+            <span class="lab-num">实验三</span>
+          </div>
+          <div class="lab-card-body">
+            <h3>数字调制与解调</h3>
+            <p>ASK、FSK、BPSK、QPSK 调制仿真，星座图与误码率曲线。</p>
+            <ul class="lab-points">
+              <li>二进制 ASK / FSK</li>
+              <li>BPSK / QPSK 相移键控</li>
+              <li>星座图显示</li>
+              <li>SNR–BER 性能曲线</li>
+            </ul>
+            <span class="lab-btn">进入实验 →</span>
+          </div>
+        </a>
+
+        <a class="lab-card" href="labs/sampling.html">
+          <div class="lab-card-header" style="background: linear-gradient(135deg,#f59e0b,#92400e)">
+            <span class="lab-icon">🔬</span>
+            <span class="lab-num">实验四</span>
+          </div>
+          <div class="lab-card-body">
+            <h3>抽样定理</h3>
+            <p>奈奎斯特抽样定理演示，过采样、欠采样对信号重建的影响。</p>
+            <ul class="lab-points">
+              <li>奈奎斯特频率</li>
+              <li>过采样 / 欠采样对比</li>
+              <li>理想内插重建</li>
+              <li>混叠现象可视化</li>
+            </ul>
+            <span class="lab-btn">进入实验 →</span>
+          </div>
+        </a>
+
+        <a class="lab-card" href="labs/pcm.html">
+          <div class="lab-card-header" style="background: linear-gradient(135deg,#ef4444,#7f1d1d)">
+            <span class="lab-icon">🔢</span>
+            <span class="lab-num">实验五</span>
+          </div>
+          <div class="lab-card-body">
+            <h3>PCM 脉冲编码调制</h3>
+            <p>均匀量化与非均匀量化（A律13折线），编码解码全流程仿真。</p>
+            <ul class="lab-points">
+              <li>均匀量化与编码</li>
+              <li>A律 13折线非均匀量化</li>
+              <li>量化噪声分析</li>
+              <li>编码位数对信噪比影响</li>
+            </ul>
+            <span class="lab-btn">进入实验 →</span>
+          </div>
+        </a>
+
+        <a class="lab-card" href="labs/channel.html">
+          <div class="lab-card-header" style="background: linear-gradient(135deg,#06b6d4,#164e63)">
+            <span class="lab-icon">📊</span>
+            <span class="lab-num">实验六</span>
+          </div>
+          <div class="lab-card-body">
+            <h3>信道噪声与误码率</h3>
+            <p>AWGN 信道模型，SNR 与误码率关系，各调制方式性能对比。</p>
+            <ul class="lab-points">
+              <li>高斯白噪声 AWGN 信道</li>
+              <li>SNR–BER 仿真曲线</li>
+              <li>BPSK / QPSK / FSK 对比</li>
+              <li>理论值与仿真值验证</li>
+            </ul>
+            <span class="lab-btn">进入实验 →</span>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <section class="guide-section">
+      <h2 class="section-title">使用指南</h2>
+      <div class="guide-grid">
+        <div class="guide-item">
+          <div class="guide-num">01</div>
+          <h4>选择实验</h4>
+          <p>点击对应实验卡片进入仿真页面</p>
+        </div>
+        <div class="guide-item">
+          <div class="guide-num">02</div>
+          <h4>调节参数</h4>
+          <p>拖动滑块或输入数值，实时更新仿真结果</p>
+        </div>
+        <div class="guide-item">
+          <div class="guide-num">03</div>
+          <h4>观察波形</h4>
+          <p>查看时域波形、频谱、星座图等多维图表</p>
+        </div>
+        <div class="guide-item">
+          <div class="guide-num">04</div>
+          <h4>分析结论</h4>
+          <p>参考实验报告模板完成数据记录与分析</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>通信原理交互式仿真实验平台 · 电子信息类专业应用型本科教学资源</p>
+  </footer>
+</body>
+</html>

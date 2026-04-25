@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>实验一：模拟调制与解调</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="lab-page">
+  <nav class="lab-nav">
+    <a href="../index.html">首页</a>
+    <span class="sep">/</span>
+    <span class="current">实验一：模拟调制与解调</span>
+  </nav>
+
+  <div class="lab-main">
+    <!-- ── Control Panel ── -->
+    <aside class="control-panel">
+      <div class="panel-section">
+        <div class="panel-title">调制方式</div>
+        <div class="control-row">
+          <div class="control-label"><span>调制类型</span></div>
+          <select id="modType">
+            <option value="am">AM（调幅）</option>
+            <option value="dsb">DSB-SC（抑制载波双边带）</option>
+            <option value="fm">FM（调频）</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">信号参数</div>
+        <div class="control-row">
+          <div class="control-label"><span>消息信号频率 fm</span><span class="val" id="lbl_fm">1 kHz</span></div>
+          <input type="range" id="fm" min="500" max="5000" step="100" value="1000">
+        </div>
+        <div class="control-row">
+          <div class="control-label"><span>载波频率 fc</span><span class="val" id="lbl_fc">10 kHz</span></div>
+          <input type="range" id="fc" min="5000" max="30000" step="500" value="10000">
+        </div>
+        <div class="control-row" id="row_ma">
+          <div class="control-label"><span>调制度 mₐ</span><span class="val" id="lbl_ma">0.8</span></div>
+          <input type="range" id="ma" min="0.1" max="1.5" step="0.05" value="0.8">
+        </div>
+        <div class="control-row" id="row_mf" style="display:none">
+          <div class="control-label"><span>调频指数 mf</span><span class="val" id="lbl_mf">5</span></div>
+          <input type="range" id="mf" min="1" max="20" step="0.5" value="5">
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">显示选项</div>
+        <div class="control-row">
+          <div class="control-label"><span>显示解调波形</span></div>
+          <select id="showDemod">
+            <option value="yes">是</option>
+            <option value="no">否</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn-run" onclick="runSim()">▶ 运行仿真</button>
+      <button class="btn-secondary" onclick="randomize()">随机参数</button>
+
+      <div class="panel-section">
+        <div class="panel-title">仿真结果</div>
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-label">调制带宽</div>
+            <div class="stat-value" id="stat_bw">— Hz</div>
+          </div>
+        </div>
+        <div class="stats-row" style="margin-top:8px">
+          <div class="stat-box">
+            <div class="stat-label">调制效率</div>
+            <div class="stat-value" id="stat_eff">— %</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Charts ── -->
+    <div class="charts-area">
+      <!-- Theory -->
+      <div class="theory-card">
+        <h4>实验原理</h4>
+        <p id="theory_text">AM调幅信号的数学表达式为：</p>
+        <div class="formula" id="theory_formula">s(t) = Ac[1 + mₐ·cos(2π fm t)]·cos(2π fc t)</div>
+        <ul id="theory_list" style="margin-top:8px">
+          <li>mₐ ∈ (0,1)：正常调制；mₐ > 1：过调制（产生失真）</li>
+          <li>AM 信号带宽 BW = 2 fm</li>
+          <li>AM 调制效率 η = mₐ²/(2 + mₐ²)</li>
+        </ul>
+      </div>
+
+      <!-- Waveforms -->
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot"></div>消息信号（时域）</div>
+        <div class="chart-wrap"><canvas id="chartMsg"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot" style="background:#818cf8"></div>已调信号（时域）</div>
+        <div class="chart-wrap"><canvas id="chartMod"></canvas></div>
+      </div>
+
+      <div class="chart-card" id="card_demod">
+        <div class="chart-card-title"><div class="dot" style="background:#34d399"></div>解调信号（时域）</div>
+        <div class="chart-wrap"><canvas id="chartDemod"></canvas></div>
+      </div>
+
+      <!-- Spectrum -->
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot" style="background:#fbbf24"></div>频谱对比（单边幅度谱）</div>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab(this,'spec_msg')">消息信号</button>
+          <button class="tab-btn" onclick="switchTab(this,'spec_mod')">已调信号</button>
+        </div>
+        <div id="spec_msg" class="tab-content active">
+          <div class="chart-wrap"><canvas id="chartSpecMsg"></canvas></div>
+        </div>
+        <div id="spec_mod" class="tab-content">
+          <div class="chart-wrap"><canvas id="chartSpecMod"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/core/dsp.js"></script>
+  <script>
+    const SR = 100000; // 100 kHz sample rate
+    const T  = 0.005;  // 5 ms display window
+    const N  = Math.round(SR * T);
+
+    let charts = {};
+
+    function makeChart(id, label, color, xLabel = 't (ms)', yLabel = 'Amplitude') {
+      const ctx = document.getElementById(id).getContext('2d');
+      return new Chart(ctx, {
+        type: 'line',
+        data: { datasets: [{ label, data: [], borderColor: color, borderWidth: 1.5,
+          pointRadius: 0, tension: 0.2, fill: false }] },
+        options: {
+          animation: false, responsive: true, maintainAspectRatio: false,
+          scales: {
+            x: { type: 'linear', title: { display: true, text: xLabel, color: '#94a3b8', font:{size:11} },
+              grid: { color: '#334155' }, ticks: { color: '#94a3b8', maxTicksLimit: 8,
+                callback: v => xLabel.includes('ms') ? v.toFixed(1) : (v/1000).toFixed(0)+'k' } },
+            y: { title: { display: true, text: yLabel, color: '#94a3b8', font:{size:11} },
+              grid: { color: '#334155' }, ticks: { color: '#94a3b8', maxTicksLimit: 6 } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function makeSpecChart(id, label, color) {
+      const ctx = document.getElementById(id).getContext('2d');
+      return new Chart(ctx, {
+        type: 'line',
+        data: { datasets: [{ label, data: [], borderColor: color, borderWidth: 1.5,
+          pointRadius: 0, tension: 0, fill: true,
+          backgroundColor: color.replace(')', ',0.15)').replace('rgb','rgba') }] },
+        options: {
+          animation: false, responsive: true, maintainAspectRatio: false,
+          scales: {
+            x: { type: 'linear', title: { display: true, text: 'Frequency (kHz)', color: '#94a3b8', font:{size:11} },
+              grid: { color: '#334155' }, ticks: { color: '#94a3b8', maxTicksLimit: 8,
+                callback: v => (v/1000).toFixed(0) } },
+            y: { title: { display: true, text: 'dB', color: '#94a3b8', font:{size:11} },
+              grid: { color: '#334155' }, ticks: { color: '#94a3b8' }, min: -80 }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function initCharts() {
+      charts.msg      = makeChart('chartMsg',    'Message',    'rgb(56,189,248)');
+      charts.mod      = makeChart('chartMod',    'Modulated',  'rgb(129,140,248)');
+      charts.demod    = makeChart('chartDemod',  'Demodulated','rgb(52,211,153)');
+      charts.specMsg  = makeSpecChart('chartSpecMsg', 'Spectrum', 'rgb(251,191,36)');
+      charts.specMod  = makeSpecChart('chartSpecMod', 'Spectrum', 'rgb(251,191,36)');
+    }
+
+    function updateChart(chart, xArr, yArr, maxPts = 500) {
+      const step = Math.max(1, Math.floor(yArr.length / maxPts));
+      const pts = [];
+      for (let i = 0; i < yArr.length; i += step) pts.push({ x: xArr[i], y: yArr[i] });
+      chart.data.datasets[0].data = pts;
+      chart.update('none');
+    }
+
+    function runSim() {
+      const modType = document.getElementById('modType').value;
+      const fm_hz   = +document.getElementById('fm').value;
+      const fc_hz   = +document.getElementById('fc').value;
+      const ma      = +document.getElementById('ma').value;
+      const mf      = +document.getElementById('mf').value;
+      const showDemod = document.getElementById('showDemod').value === 'yes';
+
+      // Time axis in ms
+      const tMs = Array.from({length: N}, (_, i) => i / SR * 1000);
+
+      // Message: single sine tone
+      const message = DSP.sineWave(fm_hz, SR, N, 1, 0);
+
+      let modulated;
+      if (modType === 'am') {
+        modulated = DSP.modulateAM(message, fc_hz, SR, ma);
+        const eff = (ma * ma) / (2 + ma * ma) * 100;
+        document.getElementById('stat_bw').textContent  = (2 * fm_hz / 1000).toFixed(2) + ' kHz';
+        document.getElementById('stat_eff').textContent = eff.toFixed(1) + ' %';
+      } else if (modType === 'dsb') {
+        modulated = DSP.modulateDSB(message, fc_hz, SR);
+        document.getElementById('stat_bw').textContent  = (2 * fm_hz / 1000).toFixed(2) + ' kHz';
+        document.getElementById('stat_eff').textContent = '100 %';
+      } else { // FM
+        const kf = mf * fm_hz;
+        modulated = DSP.modulateFM(message, fc_hz, SR, kf);
+        const bw = 2 * (mf + 1) * fm_hz; // Carson's rule
+        document.getElementById('stat_bw').textContent  = (bw / 1000).toFixed(2) + ' kHz';
+        document.getElementById('stat_eff').textContent = '— %';
+      }
+
+      // Demodulated
+      let demodulated;
+      if (modType === 'am') demodulated = DSP.demodAM(modulated, fc_hz, SR, 0.08);
+      else if (modType === 'dsb') {
+        // coherent: multiply by carrier then LPF
+        const coherent = new Float64Array(N);
+        for (let i = 0; i < N; i++) {
+          const t = i / SR;
+          coherent[i] = modulated[i] * 2 * Math.cos(2 * Math.PI * fc_hz * t);
+        }
+        let lpf = 0;
+        for (let i = 0; i < N; i++) { lpf += 0.06 * (coherent[i] - lpf); demodulated = demodulated || new Float64Array(N); demodulated[i] = lpf; }
+      } else {
+        // FM: differentiate + envelope detect
+        demodulated = new Float64Array(N);
+        let prev = 0;
+        for (let i = 0; i < N; i++) {
+          demodulated[i] = modulated[i] - prev; prev = modulated[i];
+        }
+      }
+
+      // Spectra
+      const { freqs: fMsg, mag: mMsg } = DSP.spectrum(message, SR);
+      const { freqs: fMod, mag: mMod } = DSP.spectrum(modulated, SR);
+      const dbMsg = DSP.magTodB(mMsg);
+      const dbMod = DSP.magTodB(mMod);
+
+      updateChart(charts.msg, tMs, Array.from(message));
+      updateChart(charts.mod, tMs, Array.from(modulated));
+      if (showDemod && demodulated) updateChart(charts.demod, tMs, Array.from(demodulated));
+
+      // Spectrum: limit to 2×fc
+      const fLim = Math.min(fMsg.length, Math.round(2.5 * fc_hz / SR * fMsg.length));
+      const specMsgPts = Array.from({length: fLim}, (_, i) => ({ x: fMsg[i], y: dbMsg[i] }));
+      const specModPts = Array.from({length: fLim}, (_, i) => ({ x: fMod[i], y: dbMod[i] }));
+      charts.specMsg.data.datasets[0].data = specMsgPts;
+      charts.specMod.data.datasets[0].data = specModPts;
+      charts.specMsg.update('none');
+      charts.specMod.update('none');
+
+      document.getElementById('card_demod').style.display = showDemod ? '' : 'none';
+    }
+
+    function randomize() {
+      document.getElementById('fm').value = [500,1000,2000,3000][Math.floor(Math.random()*4)];
+      document.getElementById('fc').value = [8000,10000,15000,20000][Math.floor(Math.random()*4)];
+      document.getElementById('ma').value = (Math.random() * 1.3 + 0.2).toFixed(2);
+      document.getElementById('mf').value = (Math.random() * 15 + 1).toFixed(1);
+      syncLabels(); runSim();
+    }
+
+    function syncLabels() {
+      const get = id => document.getElementById(id);
+      const fmt = (v, unit) => parseFloat(v) >= 1000 ? (v/1000).toFixed(1)+' k'+unit : v+' '+unit;
+      get('lbl_fm').textContent = fmt(get('fm').value, 'Hz');
+      get('lbl_fc').textContent = fmt(get('fc').value, 'Hz');
+      get('lbl_ma').textContent = (+get('ma').value).toFixed(2);
+      get('lbl_mf').textContent = (+get('mf').value).toFixed(1);
+    }
+
+    function switchTab(btn, tabId) {
+      btn.closest('.chart-card').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.closest('.chart-card').querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    // Theory text update
+    function updateTheory() {
+      const t = document.getElementById('modType').value;
+      const texts = {
+        am:  ['AM 调幅信号表达式：','s(t) = Ac[1 + mₐ·cos(2π fm t)]·cos(2π fc t)',
+               ['mₐ ∈ (0,1)：正常调制；mₐ > 1：过调制','AM 信号带宽 BW = 2fm','AM 调制效率 η = mₐ²/(2 + mₐ²)']],
+        dsb: ['DSB-SC 抑制载波双边带信号：','s(t) = m(t)·cos(2π fc t)',
+               ['消除载波分量，调制效率 100%','带宽 BW = 2fm，需相干解调','频谱对称分布在 fc ± fm']],
+        fm:  ['FM 调频信号表达式（单音调制）：','s(t) = Ac·cos[2π fc t + mf·sin(2π fm t)]',
+               ['mf = Δf / fm 为调制指数','Carson 带宽准则：BW ≈ 2(mf+1)fm','mf 增大 → 带宽增大，频谱分量更多']]
+      };
+      const [text, formula, list] = texts[t];
+      document.getElementById('theory_text').textContent = text;
+      document.getElementById('theory_formula').textContent = formula;
+      document.getElementById('theory_list').innerHTML = list.map(l => `<li>${l}</li>`).join('');
+      document.getElementById('row_ma').style.display = t === 'fm' ? 'none' : '';
+      document.getElementById('row_mf').style.display = t === 'fm' ? '' : 'none';
+    }
+
+    // Wire up listeners
+    ['fm','fc','ma','mf'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => { syncLabels(); runSim(); });
+    });
+    document.getElementById('modType').addEventListener('change', () => { updateTheory(); runSim(); });
+    document.getElementById('showDemod').addEventListener('change', runSim);
+
+    initCharts();
+    syncLabels();
+    updateTheory();
+    runSim();
+  </script>
+</body>
+</html>

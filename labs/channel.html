@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>实验六：信道噪声与误码率</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="lab-page">
+  <nav class="lab-nav">
+    <a href="../index.html">首页</a>
+    <span class="sep">/</span>
+    <span class="current">实验六：信道噪声与误码率</span>
+  </nav>
+
+  <div class="lab-main">
+    <aside class="control-panel">
+      <div class="panel-section">
+        <div class="panel-title">信道参数</div>
+        <div class="control-row">
+          <div class="control-label"><span>信噪比 SNR (Eb/N₀)</span><span class="val" id="lbl_snr">10 dB</span></div>
+          <input type="range" id="snr" min="-2" max="20" step="0.5" value="10">
+        </div>
+        <div class="control-row">
+          <div class="control-label"><span>噪声类型</span></div>
+          <select id="noiseType">
+            <option value="awgn">AWGN 高斯白噪声</option>
+            <option value="rayleigh">瑞利衰落（简化）</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">仿真设置</div>
+        <div class="control-row">
+          <div class="control-label"><span>仿真比特数</span><span class="val" id="lbl_nb">5000</span></div>
+          <input type="range" id="nbits" min="1000" max="20000" step="1000" value="5000">
+        </div>
+        <div class="control-row">
+          <div class="control-label"><span>显示调制方式</span></div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+            <label style="font-size:.82rem;color:#94a3b8;display:flex;align-items:center;gap:6px">
+              <input type="checkbox" id="cb_bpsk" checked> BPSK</label>
+            <label style="font-size:.82rem;color:#94a3b8;display:flex;align-items:center;gap:6px">
+              <input type="checkbox" id="cb_qpsk" checked> QPSK</label>
+            <label style="font-size:.82rem;color:#94a3b8;display:flex;align-items:center;gap:6px">
+              <input type="checkbox" id="cb_fsk" checked> FSK</label>
+            <label style="font-size:.82rem;color:#94a3b8;display:flex;align-items:center;gap:6px">
+              <input type="checkbox" id="cb_ask" checked> ASK</label>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-run" onclick="runFullSim()">▶ 完整仿真（扫描SNR）</button>
+      <button class="btn-secondary" onclick="runPointSim()">单点仿真（当前SNR）</button>
+
+      <div class="panel-section">
+        <div class="panel-title">当前SNR 误码率</div>
+        <div class="stats-row"><div class="stat-box"><div class="stat-label">BPSK 理论</div><div class="stat-value" id="s_bpsk_th">—</div></div></div>
+        <div class="stats-row" style="margin-top:8px"><div class="stat-box"><div class="stat-label">BPSK 仿真</div><div class="stat-value" id="s_bpsk_sim">—</div></div></div>
+        <div class="stats-row" style="margin-top:8px"><div class="stat-box"><div class="stat-label">QPSK 理论</div><div class="stat-value" id="s_qpsk_th">—</div></div></div>
+        <div class="stats-row" style="margin-top:8px"><div class="stat-box"><div class="stat-label">FSK 理论</div><div class="stat-value" id="s_fsk_th">—</div></div></div>
+      </div>
+    </aside>
+
+    <div class="charts-area">
+      <div class="theory-card">
+        <h4>AWGN 信道与误码率</h4>
+        <div class="formula">P_e(BPSK) = Q(√(2Eb/N₀))    P_e(QPSK) = Q(√(2Eb/N₀))</div>
+        <ul>
+          <li>AWGN（加性高斯白噪声）是最常用的信道模型，噪声服从 N(0,σ²)</li>
+          <li>BPSK 与 QPSK 具有相同的 Eb/N₀ vs BER 性能（QPSK 带宽效率是 BPSK 两倍）</li>
+          <li>FSK 性能约比 BPSK 差 3 dB；ASK（OOK）性能最差</li>
+          <li>SNR ≥ 10 dB 时 BPSK 误码率低于 10⁻⁵</li>
+        </ul>
+      </div>
+
+      <!-- BER Curve -->
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot"></div>SNR vs 误码率（BER Curve）</div>
+        <div class="chart-wrap-tall"><canvas id="chartBER"></canvas></div>
+      </div>
+
+      <!-- Noise waveform -->
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot" style="background:#818cf8"></div>当前SNR下接收信号（BPSK）</div>
+        <div class="chart-wrap"><canvas id="chartRx"></canvas></div>
+      </div>
+
+      <!-- Noise distribution -->
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot" style="background:#fbbf24"></div>噪声幅度分布（直方图）</div>
+        <div class="chart-wrap-tall"><canvas id="chartHist"></canvas></div>
+      </div>
+
+      <!-- Eye diagram -->
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot" style="background:#34d399"></div>眼图（BPSK 接收信号）</div>
+        <div class="chart-wrap-tall"><canvas id="chartEye"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/core/dsp.js"></script>
+  <script>
+    const SR  = 40000;
+    const SPB = 40; // samples per bit
+    let charts = {};
+    let berSimData = { bpsk:[], qpsk:[], fsk:[], ask:[] };
+
+    function makeLogChart(id) {
+      const ctx = document.getElementById(id).getContext('2d');
+      return new Chart(ctx, {
+        type:'line',
+        data:{datasets:[
+          {label:'BPSK 理论', data:[], borderColor:'rgb(56,189,248)',  borderWidth:2, pointRadius:3, fill:false},
+          {label:'BPSK 仿真', data:[], borderColor:'rgb(56,189,248)',  borderWidth:0, pointRadius:5, showLine:false,
+           pointBackgroundColor:'rgba(56,189,248,0.7)'},
+          {label:'QPSK 理论', data:[], borderColor:'rgb(129,140,248)', borderWidth:2, pointRadius:3, fill:false, borderDash:[5,3]},
+          {label:'QPSK 仿真', data:[], borderColor:'rgb(129,140,248)', borderWidth:0, pointRadius:5, showLine:false,
+           pointBackgroundColor:'rgba(129,140,248,0.7)'},
+          {label:'FSK 理论',  data:[], borderColor:'rgb(251,191,36)',  borderWidth:2, pointRadius:3, fill:false, borderDash:[3,3]},
+          {label:'ASK 理论',  data:[], borderColor:'rgb(248,113,113)', borderWidth:2, pointRadius:3, fill:false, borderDash:[2,4]},
+        ]},
+        options:{
+          animation:false, responsive:true, maintainAspectRatio:false,
+          scales:{
+            x:{type:'linear',title:{display:true,text:'SNR = Eb/N₀ (dB)',color:'#94a3b8',font:{size:11}},
+              grid:{color:'#334155'},ticks:{color:'#94a3b8'}},
+            y:{type:'logarithmic',title:{display:true,text:'BER',color:'#94a3b8',font:{size:11}},
+              min:1e-7,max:1,grid:{color:'#334155'},
+              ticks:{color:'#94a3b8',callback:v=>{
+                const p=Math.round(Math.log10(v));
+                return p===Math.log10(v)?'10^'+p:'';
+              }}}
+          },
+          plugins:{legend:{display:true,labels:{color:'#94a3b8',font:{size:11}}}}
+        }
+      });
+    }
+
+    function makeLineChart(id, datasets, xLabel, yLabel) {
+      const ctx = document.getElementById(id).getContext('2d');
+      return new Chart(ctx, {
+        type:'line', data:{datasets},
+        options:{
+          animation:false, responsive:true, maintainAspectRatio:false,
+          scales:{
+            x:{type:'linear',title:{display:true,text:xLabel||'',color:'#94a3b8',font:{size:11}},
+              grid:{color:'#334155'},ticks:{color:'#94a3b8',maxTicksLimit:8}},
+            y:{title:{display:true,text:yLabel||'',color:'#94a3b8',font:{size:11}},
+              grid:{color:'#334155'},ticks:{color:'#94a3b8',maxTicksLimit:6}}
+          },
+          plugins:{legend:{display:false}}
+        }
+      });
+    }
+
+    function makeBarChart(id) {
+      const ctx = document.getElementById(id).getContext('2d');
+      return new Chart(ctx, {
+        type:'bar',
+        data:{datasets:[{label:'Count',data:[],backgroundColor:'rgba(251,191,36,0.6)',borderColor:'rgb(251,191,36)',borderWidth:1}]},
+        options:{
+          animation:false, responsive:true, maintainAspectRatio:false,
+          scales:{
+            x:{type:'linear',offset:false,
+              title:{display:true,text:'Noise amplitude',color:'#94a3b8',font:{size:11}},
+              grid:{color:'#334155'},ticks:{color:'#94a3b8',maxTicksLimit:10,callback:v=>v.toFixed(1)}},
+            y:{title:{display:true,text:'Count',color:'#94a3b8',font:{size:11}},
+              grid:{color:'#334155'},ticks:{color:'#94a3b8'}}
+          },
+          plugins:{legend:{display:false}}
+        }
+      });
+    }
+
+    function initCharts() {
+      charts.ber  = makeLogChart('chartBER');
+      charts.rx   = makeLineChart('chartRx', [
+        {label:'Tx',data:[],borderColor:'rgba(56,189,248,0.4)',borderWidth:1,pointRadius:0,fill:false,borderDash:[3,3]},
+        {label:'Rx',data:[],borderColor:'rgb(129,140,248)',borderWidth:1.5,pointRadius:0,fill:false}
+      ], 'Time (ms)', 'Amplitude');
+      charts.hist = makeBarChart('chartHist');
+      charts.eye  = makeLineChart('chartEye', [
+        {label:'Eye',data:[],borderColor:'rgba(52,211,153,0.3)',borderWidth:1,pointRadius:0,fill:false}
+      ], 'Sample', 'Amplitude');
+    }
+
+    function simulateBER(snrDb, nbits, modType) {
+      const bits = DSP.randomBits(nbits);
+      let modSig, rxSig, errors=0;
+
+      const fc=8000, f2=12000;
+      if (modType==='bpsk') {
+        modSig = DSP.modulateBPSK(bits, fc, SR, SPB);
+        rxSig  = DSP.addAWGN(modSig, snrDb);
+        // Coherent detect: integrate over each symbol
+        for (let i=0;i<bits.length;i++) {
+          let corr=0;
+          for (let j=0;j<SPB;j++) {
+            const t=(i*SPB+j)/SR;
+            corr+=rxSig[i*SPB+j]*Math.cos(2*Math.PI*fc*t);
+          }
+          const det=corr>0?1:-1;
+          if (det!==bits[i]) errors++;
+        }
+      } else if (modType==='qpsk') {
+        // simplify: map dibits to symbols, detect with AWGN
+        for (let i=0;i<Math.floor(bits.length/2);i++) {
+          const b1=bits[2*i],b2=bits[2*i+1];
+          const snrLin=Math.pow(10,snrDb/10);
+          const n=DSP.gaussianNoise(2,1/Math.sqrt(snrLin));
+          const iComp=b1+n[0], qComp=b2+n[1];
+          if((iComp>0?1:-1)!==b1) errors++;
+          if((qComp>0?1:-1)!==b2) errors++;
+        }
+      } else if (modType==='fsk') {
+        modSig=DSP.modulateFSK(bits,fc,f2,SR,SPB);
+        rxSig=DSP.addAWGN(modSig,snrDb);
+        for (let i=0;i<bits.length;i++) {
+          let c1=0,c2=0;
+          for (let j=0;j<SPB;j++) {
+            const t=(i*SPB+j)/SR;
+            c1+=rxSig[i*SPB+j]*Math.cos(2*Math.PI*fc*t);
+            c2+=rxSig[i*SPB+j]*Math.cos(2*Math.PI*f2*t);
+          }
+          const det=c1>c2?1:-1;
+          if(det!==bits[i]) errors++;
+        }
+      } else { // ask
+        modSig=DSP.modulateASK(bits,fc,SR,SPB);
+        rxSig=DSP.addAWGN(modSig,snrDb);
+        for (let i=0;i<bits.length;i++) {
+          let env=0;
+          for (let j=0;j<SPB;j++) env+=Math.abs(rxSig[i*SPB+j]);
+          env/=SPB;
+          const det=env>0.4?1:-1;
+          if(det!==bits[i]) errors++;
+        }
+      }
+      return { ber:errors/nbits, rxSig, bits };
+    }
+
+    function buildHistogram(noise, bins=40) {
+      const min=-3,max=3;
+      const step=(max-min)/bins;
+      const counts=new Array(bins).fill(0);
+      for (const v of noise) {
+        const idx=Math.floor((v-min)/step);
+        if(idx>=0&&idx<bins) counts[idx]++;
+      }
+      return counts.map((c,i)=>({x:min+(i+0.5)*step,y:c}));
+    }
+
+    function runPointSim() {
+      const snrDb=+document.getElementById('snr').value;
+      const nbits=+document.getElementById('nbits').value;
+
+      const {ber:bpskBer, rxSig, bits} = simulateBER(snrDb, nbits, 'bpsk');
+      const {ber:qpskBer} = simulateBER(snrDb, Math.min(nbits,5000), 'qpsk');
+      const {ber:fskBer}  = simulateBER(snrDb, Math.min(nbits,5000), 'fsk');
+
+      document.getElementById('s_bpsk_th').textContent = DSP.berBPSK(snrDb).toExponential(2);
+      document.getElementById('s_bpsk_sim').textContent= bpskBer.toExponential(2);
+      document.getElementById('s_qpsk_th').textContent = DSP.berQPSK(snrDb).toExponential(2);
+      document.getElementById('s_fsk_th').textContent  = DSP.berFSK(snrDb).toExponential(2);
+
+      if (!rxSig) return;
+
+      // Rx waveform
+      const dispBits=Math.min(16,bits.length);
+      const dispN=dispBits*SPB;
+      const tMs=Array.from({length:dispN},(_,i)=>i/SR*1000);
+      const txSig=DSP.modulateBPSK(bits.slice(0,dispBits),8000,SR,SPB);
+      const step=Math.max(1,Math.floor(dispN/500));
+      charts.rx.data.datasets[0].data=Array.from(txSig).filter((_,i)=>i%step===0).map((v,i)=>({x:tMs[i*step],y:v}));
+      charts.rx.data.datasets[1].data=Array.from(rxSig).filter((_,i)=>i<dispN&&i%step===0).map((v,i)=>({x:tMs[i*step],y:v}));
+      charts.rx.update('none');
+
+      // Noise histogram
+      const sigPow=DSP.power(rxSig);
+      const snrLin=Math.pow(10,snrDb/10);
+      const sigma=Math.sqrt(sigPow/snrLin);
+      const noiseArr=DSP.gaussianNoise(2000,sigma);
+      charts.hist.data.datasets[0].data=buildHistogram(noiseArr);
+      charts.hist.update('none');
+
+      // Eye diagram
+      const eyePts=[];
+      const eyeLen=SPB*2;
+      for (let k=0;k<Math.min(30,Math.floor(rxSig.length/eyeLen));k++) {
+        for (let j=0;j<eyeLen;j++) {
+          eyePts.push({x:j,y:rxSig[k*eyeLen+j]});
+        }
+      }
+      charts.eye.data.datasets[0].data=eyePts;
+      charts.eye.update('none');
+    }
+
+    function runFullSim() {
+      const snrRange=[-2,-1,0,1,2,3,4,5,6,7,8,9,10,12,14,16,18,20];
+      const nbits=+document.getElementById('nbits').value;
+
+      // Theory curves (smooth)
+      const snrFine=Array.from({length:100},(_,i)=>-2+i*22/99);
+      const cb=id=>document.getElementById(id).checked;
+
+      charts.ber.data.datasets[0].data=snrFine.map(s=>({x:s,y:Math.max(DSP.berBPSK(s),1e-7)}));
+      charts.ber.data.datasets[2].data=snrFine.map(s=>({x:s,y:Math.max(DSP.berQPSK(s),1e-7)}));
+      charts.ber.data.datasets[4].data=snrFine.map(s=>({x:s,y:Math.max(DSP.berFSK(s),1e-7)}));
+      charts.ber.data.datasets[5].data=snrFine.map(s=>({x:s,y:Math.max(DSP.berASK(s),1e-7)}));
+
+      // Simulation points
+      const simN=Math.min(nbits,3000);
+      const bpskSim=snrRange.map(s=>({x:s,y:Math.max(simulateBER(s,simN,'bpsk').ber,1e-7)}));
+      const qpskSim=snrRange.map(s=>({x:s,y:Math.max(simulateBER(s,simN,'qpsk').ber,1e-7)}));
+      charts.ber.data.datasets[1].data=bpskSim;
+      charts.ber.data.datasets[3].data=qpskSim;
+
+      // Visibility
+      charts.ber.data.datasets.forEach((ds,i)=>{
+        const mtMap=[cb('cb_bpsk'),cb('cb_bpsk'),cb('cb_qpsk'),cb('cb_qpsk'),cb('cb_fsk'),cb('cb_ask')];
+        ds.hidden=!mtMap[i];
+      });
+      charts.ber.update('none');
+
+      runPointSim();
+    }
+
+    function syncLabels() {
+      document.getElementById('lbl_snr').textContent=document.getElementById('snr').value+' dB';
+      document.getElementById('lbl_nb').textContent =document.getElementById('nbits').value;
+    }
+
+    ['snr','nbits'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{syncLabels();}));
+    document.getElementById('snr').addEventListener('change',runPointSim);
+
+    initCharts();
+    syncLabels();
+    runFullSim();
+  </script>
+</body>
+</html>

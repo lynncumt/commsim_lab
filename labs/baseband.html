@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>实验二：数字基带传输</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="lab-page">
+  <nav class="lab-nav">
+    <a href="../index.html">首页</a>
+    <span class="sep">/</span>
+    <span class="current">实验二：数字基带传输</span>
+  </nav>
+
+  <div class="lab-main">
+    <aside class="control-panel">
+      <div class="panel-section">
+        <div class="panel-title">编码方式</div>
+        <div class="control-row">
+          <select id="codeType">
+            <option value="nrz_l">NRZ-L（不归零电平码）</option>
+            <option value="nrz_uni">单极性NRZ</option>
+            <option value="rz">RZ（归零码）</option>
+            <option value="manchester">曼彻斯特码</option>
+            <option value="diff_manchester">差分曼彻斯特码</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">参数设置</div>
+        <div class="control-row">
+          <div class="control-label"><span>比特数</span><span class="val" id="lbl_bits">16</span></div>
+          <input type="range" id="numBits" min="8" max="32" step="4" value="16">
+        </div>
+        <div class="control-row">
+          <div class="control-label"><span>比特率</span><span class="val" id="lbl_br">1000 bps</span></div>
+          <input type="range" id="bitrate" min="500" max="5000" step="500" value="1000">
+        </div>
+        <div class="control-row">
+          <div class="control-label"><span>添加信道噪声</span></div>
+          <select id="addNoise">
+            <option value="no">不添加</option>
+            <option value="yes">是</option>
+          </select>
+        </div>
+        <div class="control-row" id="row_snr" style="display:none">
+          <div class="control-label"><span>SNR</span><span class="val" id="lbl_snr">10 dB</span></div>
+          <input type="range" id="snr" min="0" max="30" step="1" value="10">
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">比特序列</div>
+        <div style="font-family:monospace;font-size:.78rem;color:#94a3b8;word-break:break-all;line-height:1.8" id="bitDisplay">—</div>
+        <button class="btn-secondary" style="margin-top:8px" onclick="newBits()">重新生成比特</button>
+      </div>
+
+      <button class="btn-run" onclick="runSim()">▶ 运行仿真</button>
+
+      <div class="panel-section">
+        <div class="panel-title">信号特性</div>
+        <div class="stats-row">
+          <div class="stat-box"><div class="stat-label">信号带宽</div><div class="stat-value" id="stat_bw">—</div></div>
+          <div class="stat-box"><div class="stat-label">有无直流</div><div class="stat-value" id="stat_dc">—</div></div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="charts-area">
+      <div class="theory-card">
+        <h4 id="theory_title">NRZ-L 编码原理</h4>
+        <div class="formula" id="theory_formula">1 → +A；0 → -A（整个码元持续期间保持电平）</div>
+        <ul id="theory_list">
+          <li>不归零，含直流分量（与0、1出现概率相关）</li>
+          <li>第一零点带宽 BW = Rb（比特率）</li>
+          <li>无自同步能力，需外同步</li>
+        </ul>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot"></div>原始比特序列（NRZ-L 参考）</div>
+        <div class="chart-wrap"><canvas id="chartBits"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot" style="background:#818cf8"></div>编码后波形</div>
+        <div class="chart-wrap"><canvas id="chartEncoded"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot" style="background:#fbbf24"></div>功率谱密度（PSD）</div>
+        <div class="chart-wrap-tall"><canvas id="chartPSD"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot" style="background:#34d399"></div>码型对比（同一比特序列）</div>
+        <div class="chart-wrap-tall"><canvas id="chartCompare"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/core/dsp.js"></script>
+  <script>
+    const SR = 50000; // sample rate
+    let currentBits = null;
+
+    function newBits() {
+      const n = +document.getElementById('numBits').value;
+      const rawBits = DSP.randomBits(n);
+      currentBits = rawBits;
+      document.getElementById('bitDisplay').textContent =
+        Array.from(rawBits).map(b => b > 0 ? '1' : '0').join(' ');
+      runSim();
+    }
+
+    function encodeBits(bits, type) {
+      const spb = Math.max(4, Math.round(SR / +document.getElementById('bitrate').value));
+      switch(type) {
+        case 'nrz_l': return expandSPB(bits.map(b => b > 0 ? 1 : -1), spb);
+        case 'nrz_uni': return expandSPB(bits.map(b => b > 0 ? 1 : 0), spb);
+        case 'rz': {
+          const out = [];
+          for (let b of bits) {
+            for (let j = 0; j < spb; j++) out.push(j < spb/2 ? (b > 0 ? 1 : -1) : 0);
+          }
+          return out;
+        }
+        case 'manchester': {
+          const out = [];
+          for (let b of bits) {
+            for (let j = 0; j < spb; j++) out.push(j < spb/2 ? (b > 0 ? 1 : -1) : (b > 0 ? -1 : 1));
+          }
+          return out;
+        }
+        case 'diff_manchester': {
+          const out = [];
+          let level = 1;
+          for (let b of bits) {
+            if (b <= 0) level = -level;          // transition at start for 0
+            const first = level;
+            const second = -level;
+            level = second;
+            for (let j = 0; j < spb; j++) out.push(j < spb/2 ? first : second);
+          }
+          return out;
+        }
+      }
+    }
+
+    function expandSPB(arr, spb) {
+      const out = [];
+      for (let v of arr) for (let j = 0; j < spb; j++) out.push(v);
+      return out;
+    }
+
+    let charts = {};
+
+    function makeStepChart(id, color, yLabel='Amplitude') {
+      const ctx = document.getElementById(id).getContext('2d');
+      return new Chart(ctx, {
+        type: 'line',
+        data: { datasets: [{ data: [], borderColor: color, borderWidth: 2,
+          pointRadius: 0, stepped: true, fill: false }] },
+        options: {
+          animation: false, responsive: true, maintainAspectRatio: false,
+          scales: {
+            x: { type:'linear', grid:{color:'#334155'}, ticks:{color:'#94a3b8', maxTicksLimit:10,
+              callback: v => v.toFixed(1) }, title:{display:true,text:'Time (ms)',color:'#94a3b8',font:{size:11}} },
+            y: { grid:{color:'#334155'}, ticks:{color:'#94a3b8'}, min:-1.5, max:1.5,
+              title:{display:true,text:yLabel,color:'#94a3b8',font:{size:11}} }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function makeLineChart(id, datasets) {
+      const ctx = document.getElementById(id).getContext('2d');
+      return new Chart(ctx, {
+        type: 'line',
+        data: { datasets },
+        options: {
+          animation: false, responsive: true, maintainAspectRatio: false,
+          scales: {
+            x: { type:'linear', grid:{color:'#334155'}, ticks:{color:'#94a3b8', maxTicksLimit:8} },
+            y: { grid:{color:'#334155'}, ticks:{color:'#94a3b8'} }
+          },
+          plugins: { legend: { display: true, labels: { color:'#94a3b8', font:{size:11} } } }
+        }
+      });
+    }
+
+    function makePSDChart(id) {
+      const ctx = document.getElementById(id).getContext('2d');
+      return new Chart(ctx, {
+        type: 'line',
+        data: { datasets: [{ label:'PSD', data:[], borderColor:'rgb(251,191,36)', borderWidth:1.5,
+          pointRadius:0, fill:true, backgroundColor:'rgba(251,191,36,0.12)' }] },
+        options: {
+          animation: false, responsive: true, maintainAspectRatio: false,
+          scales: {
+            x: { type:'linear', title:{display:true,text:'Frequency (× Rb)',color:'#94a3b8',font:{size:11}},
+              grid:{color:'#334155'}, ticks:{color:'#94a3b8', callback: v => v.toFixed(1)} },
+            y: { grid:{color:'#334155'}, ticks:{color:'#94a3b8'}, min:-60,
+              title:{display:true,text:'dB',color:'#94a3b8',font:{size:11}} }
+          },
+          plugins: { legend: { display:false } }
+        }
+      });
+    }
+
+    function initCharts() {
+      charts.bits    = makeStepChart('chartBits',    'rgb(56,189,248)');
+      charts.encoded = makeStepChart('chartEncoded', 'rgb(129,140,248)');
+      charts.psd     = makePSDChart('chartPSD');
+      charts.compare = makeLineChart('chartCompare', [
+        { label:'NRZ-L',      data:[], borderColor:'rgb(56,189,248)',  borderWidth:1.5, pointRadius:0, stepped:true, fill:false },
+        { label:'曼彻斯特',   data:[], borderColor:'rgb(52,211,153)',  borderWidth:1.5, pointRadius:0, stepped:true, fill:false },
+        { label:'RZ',         data:[], borderColor:'rgb(251,191,36)', borderWidth:1.5, pointRadius:0, stepped:true, fill:false },
+      ]);
+    }
+
+    function toPoints(arr, spb) {
+      return arr.map((v, i) => ({ x: i / SR * 1000, y: v }));
+    }
+
+    function runSim() {
+      if (!currentBits) { newBits(); return; }
+
+      const codeType = document.getElementById('codeType').value;
+      const br       = +document.getElementById('bitrate').value;
+      const snrDb    = +document.getElementById('snr').value;
+      const addNoise = document.getElementById('addNoise').value === 'yes';
+      const spb      = Math.max(4, Math.round(SR / br));
+
+      let encoded = encodeBits(currentBits, codeType);
+      if (addNoise) {
+        const noisy = DSP.addAWGN(Float64Array.from(encoded), snrDb);
+        encoded = Array.from(noisy);
+      }
+
+      const refNRZ = encodeBits(currentBits, 'nrz_l');
+      const tRef   = refNRZ.map((v,i) => ({x: i/SR*1000, y: v}));
+      charts.bits.data.datasets[0].data = tRef;
+      charts.bits.update('none');
+
+      const tEnc = encoded.map((v,i) => ({x: i/SR*1000, y: v}));
+      charts.encoded.data.datasets[0].data = tEnc;
+      charts.encoded.update('none');
+
+      // PSD via FFT
+      const sig = Float64Array.from(encoded);
+      const { freqs, mag } = DSP.spectrum(sig, SR);
+      const dB = DSP.magTodB(mag);
+      const rbNorm = Array.from({length:Math.min(500, freqs.length)}, (_,i) => {
+        const step = Math.floor(freqs.length/500);
+        const idx = i*step;
+        return { x: freqs[idx]/br, y: dB[idx] };
+      });
+      charts.psd.data.datasets[0].data = rbNorm;
+      charts.psd.update('none');
+
+      // Compare
+      const nrzSig = encodeBits(currentBits,'nrz_l');
+      const manSig = encodeBits(currentBits,'manchester');
+      const rzSig  = encodeBits(currentBits,'rz');
+      const maxLen = Math.min(nrzSig.length, 300);
+      const stride = Math.max(1, Math.floor(nrzSig.length/300));
+      charts.compare.data.datasets[0].data = nrzSig.filter((_,i)=>i%stride===0).map((v,i)=>({x:i*stride/SR*1000, y:v}));
+      charts.compare.data.datasets[1].data = manSig.filter((_,i)=>i%stride===0).map((v,i)=>({x:i*stride/SR*1000, y:v+2.5}));
+      charts.compare.data.datasets[2].data = rzSig.filter((_,i)=>i%stride===0).map((v,i)=>({x:i*stride/SR*1000, y:v+5}));
+      charts.compare.update('none');
+
+      // Stats
+      const bwMap = { nrz_l:'1.0 Rb', nrz_uni:'1.0 Rb', rz:'2.0 Rb', manchester:'2.0 Rb', diff_manchester:'2.0 Rb' };
+      const dcMap = { nrz_l:'可能含', nrz_uni:'有直流', rz:'可能含', manchester:'无直流', diff_manchester:'无直流' };
+      document.getElementById('stat_bw').textContent = bwMap[codeType];
+      document.getElementById('stat_dc').textContent = dcMap[codeType];
+
+      updateTheory(codeType);
+    }
+
+    function updateTheory(t) {
+      const info = {
+        nrz_l:          ['NRZ-L 不归零电平码','1 → +A；0 → −A',['含直流分量','带宽 = Rb（比特率）','无自同步']],
+        nrz_uni:        ['单极性NRZ码','1 → +A；0 → 0V',['有直流分量','简单但功率利用率低','带宽 = Rb']],
+        rz:             ['RZ 归零码','1 → 前半+A后半0；0 → 全0 or 前半−A后半0',['带宽 = 2Rb（是NRZ两倍）','有定时分量，自同步能力强','功率效率低']],
+        manchester:     ['曼彻斯特码（IEEE 802.3）','1 → 前高后低↓；0 → 前低后高↑',['无直流分量','带宽 = 2Rb','有自同步能力（以太网标准）']],
+        diff_manchester:['差分曼彻斯特码（IEEE 802.5）','0 → 码元起始处有跳变；1 → 无跳变',['无直流分量','差分编码抗极性反转','令牌环网标准']]
+      };
+      const [title, formula, list] = info[t];
+      document.getElementById('theory_title').textContent = title;
+      document.getElementById('theory_formula').textContent = formula;
+      document.getElementById('theory_list').innerHTML = list.map(l=>`<li>${l}</li>`).join('');
+    }
+
+    function syncLabels() {
+      const br = +document.getElementById('bitrate').value;
+      document.getElementById('lbl_bits').textContent = document.getElementById('numBits').value;
+      document.getElementById('lbl_br').textContent = br >= 1000 ? (br/1000).toFixed(1)+' kbps' : br+' bps';
+      document.getElementById('lbl_snr').textContent = document.getElementById('snr').value+' dB';
+      document.getElementById('row_snr').style.display = document.getElementById('addNoise').value==='yes' ? '' : 'none';
+    }
+
+    ['numBits','bitrate','snr'].forEach(id => document.getElementById(id).addEventListener('input', ()=>{syncLabels();runSim();}));
+    document.getElementById('codeType').addEventListener('change', runSim);
+    document.getElementById('addNoise').addEventListener('change', ()=>{syncLabels();runSim();});
+
+    initCharts();
+    syncLabels();
+    currentBits = DSP.randomBits(+document.getElementById('numBits').value);
+    document.getElementById('bitDisplay').textContent = Array.from(currentBits).map(b=>b>0?'1':'0').join(' ');
+    runSim();
+  </script>
+</body>
+</html>

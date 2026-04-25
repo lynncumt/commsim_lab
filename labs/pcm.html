@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>实验五：PCM 脉冲编码调制</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="lab-page">
+  <nav class="lab-nav">
+    <a href="../index.html">首页</a>
+    <span class="sep">/</span>
+    <span class="current">实验五：PCM 脉冲编码调制</span>
+  </nav>
+
+  <div class="lab-main">
+    <aside class="control-panel">
+      <div class="panel-section">
+        <div class="panel-title">信号与采样</div>
+        <div class="control-row">
+          <div class="control-label"><span>信号频率 fm</span><span class="val" id="lbl_fm">1000 Hz</span></div>
+          <input type="range" id="fm" min="100" max="4000" step="100" value="1000">
+        </div>
+        <div class="control-row">
+          <div class="control-label"><span>采样频率 fs</span><span class="val" id="lbl_fs">8000 Hz</span></div>
+          <input type="range" id="fs" min="4000" max="32000" step="1000" value="8000">
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">量化编码</div>
+        <div class="control-row">
+          <div class="control-label"><span>量化位数 n</span><span class="val" id="lbl_bits">8 bit</span></div>
+          <input type="range" id="qbits" min="2" max="16" step="1" value="8">
+        </div>
+        <div class="control-row">
+          <div class="control-label"><span>量化方式</span></div>
+          <select id="qtype">
+            <option value="uniform">均匀量化</option>
+            <option value="alaw">A律 μ=255 非均匀量化</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn-run" onclick="runSim()">▶ 运行仿真</button>
+
+      <div class="panel-section">
+        <div class="panel-title">PCM 性能</div>
+        <div class="stats-row">
+          <div class="stat-box"><div class="stat-label">量化级数 L</div><div class="stat-value" id="stat_L">256</div></div>
+        </div>
+        <div class="stats-row" style="margin-top:8px">
+          <div class="stat-box"><div class="stat-label">理论 SQNR</div><div class="stat-value" id="stat_sqnr">—</div></div>
+        </div>
+        <div class="stats-row" style="margin-top:8px">
+          <div class="stat-box"><div class="stat-label">仿真 SQNR</div><div class="stat-value" id="stat_sqnr_sim">—</div></div>
+        </div>
+        <div class="stats-row" style="margin-top:8px">
+          <div class="stat-box"><div class="stat-label">PCM 比特率</div><div class="stat-value" id="stat_br">—</div></div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">编码样例（首8个采样点）</div>
+        <div style="font-family:monospace;font-size:.75rem;color:#94a3b8;word-break:break-all;line-height:2" id="codeDisplay">—</div>
+      </div>
+    </aside>
+
+    <div class="charts-area">
+      <div class="theory-card">
+        <h4>PCM 原理</h4>
+        <div class="formula">PCM 三步骤：抽样 → 量化 → 编码</div>
+        <ul>
+          <li>均匀量化 SQNR ≈ 6.02n + 1.76 dB（n 为量化位数）</li>
+          <li>量化位数每增加 1 bit，SQNR 改善约 6 dB</li>
+          <li>A律/μ律非均匀量化：对小信号量化级更密，大信号更疏——改善动态范围</li>
+          <li>PCM 比特率 = fs × n（bits/s）</li>
+        </ul>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot"></div>原始信号 vs 量化后信号</div>
+        <div class="chart-wrap-tall"><canvas id="chartQuant"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot" style="background:#f87171"></div>量化噪声（误差）</div>
+        <div class="chart-wrap"><canvas id="chartErr"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot" style="background:#fbbf24"></div>SQNR vs 量化位数（2~16 bit）</div>
+        <div class="chart-wrap-tall"><canvas id="chartSQNR"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot" style="background:#34d399"></div>量化级分布（量化间距可视化）</div>
+        <div class="chart-wrap"><canvas id="chartLevels"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/core/dsp.js"></script>
+  <script>
+    const SR_HIGH = 48000;
+    const T = 0.01;
+    const N_HIGH = Math.round(SR_HIGH * T);
+    let charts = {};
+
+    function buildSig(fm) {
+      const sig = new Float64Array(N_HIGH);
+      for (let i = 0; i < N_HIGH; i++) sig[i] = Math.sin(2*Math.PI*fm*i/SR_HIGH);
+      return sig;
+    }
+
+    function aLawCompress(x, mu=255) {
+      const ax = Math.abs(x);
+      const y = ax <= 1/(1+mu) ? (1+mu)*ax / (1 + Math.log(1+mu))
+                                : (1 + Math.log((1+mu)*ax)) / (1 + Math.log(1+mu));
+      return Math.sign(x) * y;
+    }
+
+    function aLawExpand(y, mu=255) {
+      const ay = Math.abs(y);
+      const thr = Math.log(1+mu) / (1+mu);
+      const x = ay <= thr ? ay*(1+Math.log(1+mu)) / (1+mu) : (Math.exp(ay*(1+Math.log(1+mu))-1)) / (1+mu);
+      return Math.sign(y) * x;
+    }
+
+    function quantize(signal, bits, type) {
+      const levels = Math.pow(2, bits);
+      const step = 2 / levels;
+      const quantized = new Float64Array(signal.length);
+      const codes     = new Uint32Array(signal.length);
+      for (let i = 0; i < signal.length; i++) {
+        let v = signal[i];
+        if (type === 'alaw') v = aLawCompress(v);
+        const idx = Math.floor((v + 1) / step);
+        const clamped = Math.max(0, Math.min(levels-1, idx));
+        codes[i] = clamped;
+        let q = -1 + (clamped + 0.5) * step;
+        if (type === 'alaw') q = aLawExpand(q);
+        quantized[i] = q;
+      }
+      return { quantized, codes };
+    }
+
+    function makeChart(id, datasets, xLabel='Time (ms)', yLabel='Amplitude') {
+      const ctx = document.getElementById(id).getContext('2d');
+      return new Chart(ctx, {
+        type:'line', data:{datasets},
+        options:{
+          animation:false, responsive:true, maintainAspectRatio:false,
+          scales:{
+            x:{type:'linear',title:{display:true,text:xLabel,color:'#94a3b8',font:{size:11}},
+              grid:{color:'#334155'},ticks:{color:'#94a3b8',maxTicksLimit:8}},
+            y:{title:{display:true,text:yLabel,color:'#94a3b8',font:{size:11}},
+              grid:{color:'#334155'},ticks:{color:'#94a3b8',maxTicksLimit:6}}
+          },
+          plugins:{legend:{display:true,labels:{color:'#94a3b8',font:{size:11}}}}
+        }
+      });
+    }
+
+    function initCharts() {
+      charts.quant = makeChart('chartQuant', [
+        {label:'原始',data:[],borderColor:'rgb(56,189,248)',borderWidth:1.2,pointRadius:0,fill:false},
+        {label:'量化后',data:[],borderColor:'rgb(251,191,36)',borderWidth:1.5,pointRadius:0,stepped:true,fill:false}
+      ]);
+      charts.err = makeChart('chartErr',[
+        {label:'量化误差',data:[],borderColor:'rgb(248,113,113)',borderWidth:1.2,pointRadius:0,fill:true,backgroundColor:'rgba(248,113,113,0.15)'}
+      ],undefined,'Error');
+      charts.sqnr = makeChart('chartSQNR',[
+        {label:'理论 SQNR',data:[],borderColor:'rgb(56,189,248)',borderWidth:2,pointRadius:3,fill:false},
+        {label:'仿真 SQNR',data:[],borderColor:'rgb(52,211,153)',borderWidth:2,pointRadius:3,fill:false,borderDash:[4,2]}
+      ], 'Quantization bits (n)', 'SQNR (dB)');
+      charts.levels = makeChart('chartLevels',[
+        {label:'量化间距',data:[],borderColor:'rgb(52,211,153)',borderWidth:1.5,pointRadius:2,fill:true,backgroundColor:'rgba(52,211,153,0.1)',showLine:true}
+      ], '归一化幅度', '步长');
+    }
+
+    function runSim() {
+      const fm    = +document.getElementById('fm').value;
+      const fs    = +document.getElementById('fs').value;
+      const bits  = +document.getElementById('qbits').value;
+      const qtype = document.getElementById('qtype').value;
+
+      // Build signal and sample
+      const sig = buildSig(fm);
+      const stepS = Math.round(SR_HIGH / fs);
+      const sampTimes=[], sampVals=[];
+      for (let i = 0; i < N_HIGH; i+=stepS) { sampTimes.push(i); sampVals.push(sig[i]); }
+
+      const { quantized, codes } = quantize(new Float64Array(sampVals), bits, qtype);
+
+      // Expand to full signal for display
+      const tMs = Array.from({length:N_HIGH},(_,i)=>i/SR_HIGH*1000);
+      const sub = (arr,lim=400)=>{
+        const step=Math.max(1,Math.floor(arr.length/lim));
+        return arr.filter((_,i)=>i%step===0).map((v,i)=>({x:tMs[i*step],y:v}));
+      };
+
+      // Quantized signal expanded (ZOH)
+      const quantExpanded = new Float64Array(N_HIGH);
+      for (let k=0;k<sampTimes.length;k++) {
+        const start=sampTimes[k], end=k+1<sampTimes.length?sampTimes[k+1]:N_HIGH;
+        for (let i=start;i<end;i++) quantExpanded[i]=quantized[k];
+      }
+
+      charts.quant.data.datasets[0].data = sub(Array.from(sig));
+      charts.quant.data.datasets[1].data = sub(Array.from(quantExpanded));
+      charts.quant.update('none');
+
+      const err = Array.from({length:N_HIGH},(_,i)=>sig[i]-quantExpanded[i]);
+      charts.err.data.datasets[0].data = sub(err);
+      charts.err.update('none');
+
+      // SQNR vs bits
+      const theoryPts=[], simPts=[];
+      for (let b=2;b<=16;b++) {
+        theoryPts.push({x:b, y:DSP.sqnrUniform(b)});
+        const { quantized:qv } = quantize(new Float64Array(sampVals), b, qtype);
+        const sigPow = sampVals.reduce((s,v)=>s+v*v,0)/sampVals.length;
+        const errVals = sampVals.map((v,i)=>v-qv[i]);
+        const errPow  = errVals.reduce((s,v)=>s+v*v,0)/errVals.length;
+        simPts.push({x:b, y:errPow>0?10*Math.log10(sigPow/errPow):-80});
+      }
+      charts.sqnr.data.datasets[0].data = theoryPts;
+      charts.sqnr.data.datasets[1].data = simPts;
+      charts.sqnr.update('none');
+
+      // Quantization levels visualization
+      const levels = Math.pow(2,bits);
+      if (qtype==='uniform') {
+        const step = 2/levels;
+        charts.levels.data.datasets[0].data = Array.from({length:levels},(_,i)=>({
+          x:-1+i*step, y:step
+        }));
+      } else {
+        // A-law: non-uniform steps
+        const pts=[];
+        for (let i=0;i<levels;i++) {
+          const y=-1+(i+0.5)*(2/levels);
+          const x_orig=aLawExpand(y);
+          const step_eff=i<levels-1?Math.abs(aLawExpand(-1+(i+1)*(2/levels))-x_orig):2/levels;
+          pts.push({x:x_orig, y:step_eff});
+        }
+        charts.levels.data.datasets[0].data=pts;
+      }
+      charts.levels.update('none');
+
+      // Stats
+      const sigPow=sampVals.reduce((s,v)=>s+v*v,0)/sampVals.length;
+      const errV=sampVals.map((v,i)=>v-quantized[i]);
+      const errPow=errV.reduce((s,v)=>s+v*v,0)/errV.length;
+      const sqnrSim=errPow>0?10*Math.log10(sigPow/errPow):999;
+      document.getElementById('stat_L').textContent=levels;
+      document.getElementById('stat_sqnr').textContent=DSP.sqnrUniform(bits).toFixed(1)+' dB';
+      document.getElementById('stat_sqnr_sim').textContent=sqnrSim.toFixed(1)+' dB';
+      document.getElementById('stat_br').textContent=((fs*bits)/1000).toFixed(1)+' kbps';
+      document.getElementById('lbl_fm').textContent=fm+' Hz';
+      document.getElementById('lbl_fs').textContent=(fs/1000).toFixed(0)+' kHz';
+      document.getElementById('lbl_bits').textContent=bits+' bit';
+
+      // Code display (first 8 samples)
+      const codeStr=Array.from(codes).slice(0,8).map(c=>c.toString(2).padStart(bits,'0')).join('\n');
+      document.getElementById('codeDisplay').textContent=codeStr;
+    }
+
+    ['fm','fs','qbits'].forEach(id=>document.getElementById(id).addEventListener('input',runSim));
+    document.getElementById('qtype').addEventListener('change',runSim);
+
+    initCharts();
+    runSim();
+  </script>
+</body>
+</html>

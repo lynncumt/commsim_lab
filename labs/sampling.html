@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>实验四：抽样定理</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="lab-page">
+  <nav class="lab-nav">
+    <a href="../index.html">首页</a>
+    <span class="sep">/</span>
+    <span class="current">实验四：奈奎斯特抽样定理</span>
+  </nav>
+
+  <div class="lab-main">
+    <aside class="control-panel">
+      <div class="panel-section">
+        <div class="panel-title">信号设置</div>
+        <div class="control-row">
+          <div class="control-label"><span>消息信号频率 fm</span><span class="val" id="lbl_fm">1000 Hz</span></div>
+          <input type="range" id="fm" min="100" max="3000" step="100" value="1000">
+        </div>
+        <div class="control-row">
+          <div class="control-label"><span>信号类型</span></div>
+          <select id="sigType">
+            <option value="sine">单音正弦</option>
+            <option value="multi">双频叠加</option>
+            <option value="square">方波（含谐波）</option>
+          </select>
+        </div>
+        <div class="control-row" id="row_fm2">
+          <div class="control-label"><span>第二分量频率 fm2</span><span class="val" id="lbl_fm2">1500 Hz</span></div>
+          <input type="range" id="fm2" min="100" max="3000" step="100" value="1500">
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">抽样参数</div>
+        <div class="control-row">
+          <div class="control-label"><span>抽样率 / 奈奎斯特率</span><span class="val" id="lbl_ratio" style="color:#fbbf24">2.0×</span></div>
+          <input type="range" id="ratio" min="0.5" max="6" step="0.1" value="2.0">
+        </div>
+        <div class="control-row">
+          <div class="control-label"><span>奈奎斯特频率</span><span class="val" id="lbl_fn">2000 Hz</span></div>
+        </div>
+        <div class="control-row">
+          <div class="control-label"><span>实际抽样率 fs</span><span class="val" id="lbl_fs">4000 Hz</span></div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">重建方式</div>
+        <select id="reconType">
+          <option value="sinc">理想 sinc 内插</option>
+          <option value="zoh">零阶保持（ZOH）</option>
+          <option value="linear">线性内插</option>
+        </select>
+      </div>
+
+      <button class="btn-run" onclick="runSim()">▶ 运行仿真</button>
+
+      <div class="panel-section">
+        <div class="panel-title">仿真结果</div>
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-label">采样状态</div>
+            <div class="stat-value" id="stat_status" style="font-size:1rem">—</div>
+          </div>
+        </div>
+        <div class="stats-row" style="margin-top:8px">
+          <div class="stat-box">
+            <div class="stat-label">重建误差 (RMS)</div>
+            <div class="stat-value" id="stat_err">—</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="charts-area">
+      <div class="theory-card">
+        <h4>奈奎斯特–香农抽样定理</h4>
+        <div class="formula">fs ≥ 2 × fmax（奈奎斯特采样率）</div>
+        <ul>
+          <li>当 fs ≥ 2fmax 时，可以从样本<strong>完美重建</strong>原始连续信号</li>
+          <li>当 fs &lt; 2fmax 时，发生<strong>混叠（Aliasing）</strong>，无法无失真重建</li>
+          <li>实际系统中通常取 fs = 3~4 × fmax 以留有余量（例：CD音频 44.1 kHz，fmax=20 kHz）</li>
+          <li>理想重建使用 sinc 函数内插；ZOH 和线性内插存在高频失真</li>
+        </ul>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot"></div>原始连续信号与采样点</div>
+        <div class="chart-wrap-tall"><canvas id="chartOrig"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot" style="background:#818cf8"></div>重建信号对比（蓝=原始，紫=重建）</div>
+        <div class="chart-wrap-tall"><canvas id="chartRecon"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot" style="background:#fbbf24"></div>原始信号频谱 vs 采样后频谱（混叠可视化）</div>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab(this,'tab_orig_spec')">原始频谱</button>
+          <button class="tab-btn" onclick="switchTab(this,'tab_samp_spec')">采样后频谱</button>
+        </div>
+        <div id="tab_orig_spec" class="tab-content active">
+          <div class="chart-wrap"><canvas id="chartSpecOrig"></canvas></div>
+        </div>
+        <div id="tab_samp_spec" class="tab-content">
+          <div class="chart-wrap"><canvas id="chartSpecSamp"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Aliasing demo -->
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot" style="background:#f87171"></div>混叠演示：欠采样时的感知频率</div>
+        <div class="chart-wrap"><canvas id="chartAlias"></canvas></div>
+        <p id="alias_note" style="font-size:.8rem;color:#94a3b8;margin-top:8px;padding:0 4px"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/core/dsp.js"></script>
+  <script>
+    const SR_HIGH = 48000; // high-res simulation rate
+    const T = 0.01;        // 10 ms
+    const N = Math.round(SR_HIGH * T);
+    let charts = {};
+
+    function makeChart(id, datasets, xLabel='Time (ms)', yLabel='Amplitude') {
+      const ctx = document.getElementById(id).getContext('2d');
+      return new Chart(ctx, {
+        type:'line', data:{datasets},
+        options:{
+          animation:false, responsive:true, maintainAspectRatio:false,
+          scales:{
+            x:{type:'linear',title:{display:true,text:xLabel,color:'#94a3b8',font:{size:11}},
+              grid:{color:'#334155'},ticks:{color:'#94a3b8',maxTicksLimit:8,callback:v=>v.toFixed(1)}},
+            y:{title:{display:true,text:yLabel,color:'#94a3b8',font:{size:11}},
+              grid:{color:'#334155'},ticks:{color:'#94a3b8',maxTicksLimit:6}}
+          },
+          plugins:{legend:{display:true,labels:{color:'#94a3b8',font:{size:11}}}}
+        }
+      });
+    }
+
+    function makeSpecChart(id) {
+      const ctx = document.getElementById(id).getContext('2d');
+      return new Chart(ctx, {
+        type:'line',
+        data:{datasets:[{label:'频谱',data:[],borderColor:'rgb(251,191,36)',borderWidth:1.5,
+          pointRadius:0,fill:true,backgroundColor:'rgba(251,191,36,0.12)'}]},
+        options:{
+          animation:false,responsive:true,maintainAspectRatio:false,
+          scales:{
+            x:{type:'linear',title:{display:true,text:'Frequency (Hz)',color:'#94a3b8',font:{size:11}},
+              grid:{color:'#334155'},ticks:{color:'#94a3b8',maxTicksLimit:8}},
+            y:{grid:{color:'#334155'},ticks:{color:'#94a3b8'},min:-80,
+              title:{display:true,text:'dB',color:'#94a3b8',font:{size:11}}}
+          },
+          plugins:{legend:{display:false}}
+        }
+      });
+    }
+
+    function initCharts() {
+      charts.orig = makeChart('chartOrig', [
+        {label:'连续信号',data:[],borderColor:'rgb(56,189,248)',borderWidth:1.2,pointRadius:0,fill:false},
+        {label:'采样点',data:[],borderColor:'rgb(251,191,36)',borderWidth:0,
+          pointRadius:5,pointBackgroundColor:'rgb(251,191,36)',showLine:false}
+      ]);
+      charts.recon = makeChart('chartRecon', [
+        {label:'原始',data:[],borderColor:'rgb(56,189,248)',borderWidth:1.2,pointRadius:0,fill:false,borderDash:[4,2]},
+        {label:'重建',data:[],borderColor:'rgb(129,140,248)',borderWidth:2,pointRadius:0,fill:false}
+      ]);
+      charts.specOrig = makeSpecChart('chartSpecOrig');
+      charts.specSamp = makeSpecChart('chartSpecSamp');
+      charts.alias = makeChart('chartAlias', [
+        {label:'原始信号',data:[],borderColor:'rgb(56,189,248)',borderWidth:1.2,pointRadius:0,fill:false},
+        {label:'混叠感知频率',data:[],borderColor:'rgb(248,113,113)',borderWidth:2,pointRadius:0,fill:false,borderDash:[3,3]}
+      ]);
+    }
+
+    function buildSignal(fm, sigType, fm2) {
+      const sig = new Float64Array(N);
+      for (let i = 0; i < N; i++) {
+        const t = i / SR_HIGH;
+        if (sigType === 'sine') {
+          sig[i] = Math.sin(2*Math.PI*fm*t);
+        } else if (sigType === 'multi') {
+          sig[i] = 0.7*Math.sin(2*Math.PI*fm*t) + 0.3*Math.sin(2*Math.PI*fm2*t);
+        } else { // square: odd harmonics up to 5th
+          sig[i] = Math.sin(2*Math.PI*fm*t) + (1/3)*Math.sin(6*Math.PI*fm*t) + (1/5)*Math.sin(10*Math.PI*fm*t);
+        }
+      }
+      return sig;
+    }
+
+    function reconstruct(samples, sampleTimes, N, type, fs) {
+      const out = new Float64Array(N);
+      const T_s = 1 / fs;
+      if (type === 'sinc') {
+        for (let n = 0; n < N; n++) {
+          let sum = 0;
+          for (let k = 0; k < samples.length; k++) {
+            const x = (n / SR_HIGH - sampleTimes[k] / SR_HIGH) / T_s;
+            sum += samples[k] * (Math.abs(x) < 1e-9 ? 1 : Math.sin(Math.PI*x)/(Math.PI*x));
+          }
+          out[n] = sum;
+        }
+      } else if (type === 'zoh') {
+        let ki = 0;
+        for (let n = 0; n < N; n++) {
+          while (ki+1 < sampleTimes.length && sampleTimes[ki+1] <= n) ki++;
+          out[n] = samples[ki];
+        }
+      } else { // linear
+        for (let n = 0; n < N; n++) {
+          let ki = 0;
+          while (ki+1 < sampleTimes.length && sampleTimes[ki+1] <= n) ki++;
+          if (ki+1 >= sampleTimes.length) { out[n] = samples[ki]; continue; }
+          const t0 = sampleTimes[ki], t1 = sampleTimes[ki+1];
+          const alpha = (n - t0) / (t1 - t0);
+          out[n] = samples[ki]*(1-alpha) + samples[ki+1]*alpha;
+        }
+      }
+      return out;
+    }
+
+    function runSim() {
+      const fm       = +document.getElementById('fm').value;
+      const sigType  = document.getElementById('sigType').value;
+      const fm2      = +document.getElementById('fm2').value;
+      const ratio    = +document.getElementById('ratio').value;
+      const reconType= document.getElementById('reconType').value;
+
+      const fmax = sigType === 'square' ? 5*fm : (sigType === 'multi' ? Math.max(fm,fm2) : fm);
+      const fn   = 2 * fmax;  // Nyquist rate
+      const fs   = ratio * fn;
+
+      document.getElementById('lbl_fn').textContent = fn.toFixed(0)+' Hz';
+      document.getElementById('lbl_fs').textContent = fs.toFixed(0)+' Hz';
+      document.getElementById('lbl_fm').textContent = fm+' Hz';
+      document.getElementById('lbl_fm2').textContent = fm2+' Hz';
+      document.getElementById('lbl_ratio').textContent = ratio.toFixed(1)+'×';
+      document.getElementById('lbl_ratio').style.color = ratio >= 2 ? '#34d399' : '#f87171';
+      document.getElementById('row_fm2').style.display = sigType==='multi' ? '' : 'none';
+
+      const sig = buildSignal(fm, sigType, fm2);
+      const tMs = Array.from({length:N}, (_,i) => i/SR_HIGH*1000);
+
+      // Sample
+      const stepSamp = SR_HIGH / fs;
+      const sampleTimes = [], sampleVals = [];
+      for (let pos = 0; pos < N; pos += stepSamp) {
+        const idx = Math.round(pos);
+        if (idx < N) { sampleTimes.push(idx); sampleVals.push(sig[idx]); }
+      }
+
+      // Reconstruct
+      const recon = reconstruct(sampleVals, sampleTimes, N, reconType, fs);
+
+      // RMS error
+      let err = 0;
+      for (let i = 0; i < N; i++) err += (sig[i]-recon[i])**2;
+      const rmsErr = Math.sqrt(err/N).toFixed(4);
+
+      // Update charts
+      const sub = (arr, lim=500) => {
+        const step = Math.max(1,Math.floor(arr.length/lim));
+        return arr.filter((_,i)=>i%step===0).map((v,i)=>({x:tMs[i*step],y:v}));
+      };
+      charts.orig.data.datasets[0].data = sub(Array.from(sig));
+      charts.orig.data.datasets[1].data = sampleTimes.map(idx=>({x:tMs[idx],y:sig[idx]}));
+      charts.orig.update('none');
+
+      charts.recon.data.datasets[0].data = sub(Array.from(sig));
+      charts.recon.data.datasets[1].data = sub(Array.from(recon));
+      charts.recon.update('none');
+
+      // Spectra
+      const { freqs: fo, mag: mo } = DSP.spectrum(sig, SR_HIGH);
+      const dbo = DSP.magTodB(mo);
+      const fLim = Math.min(fo.length, Math.round((fmax*4)/SR_HIGH*fo.length));
+      const specPts = (freqs,db,lim) => Array.from({length:Math.min(lim,400)},(_,i)=>{
+        const idx=Math.round(i*lim/400); return {x:freqs[idx],y:db[idx]};
+      });
+      charts.specOrig.data.datasets[0].data = specPts(fo,dbo,fLim);
+      charts.specOrig.update('none');
+
+      // Sampled spectrum (create impulse train signal then FFT)
+      const sampImpulse = new Float64Array(N);
+      for (let idx of sampleTimes) sampImpulse[idx] = sig[idx];
+      const { freqs: fs2, mag: ms2 } = DSP.spectrum(sampImpulse, SR_HIGH);
+      const dbs2 = DSP.magTodB(ms2);
+      const fLim2 = Math.min(fs2.length, Math.round((fs*1.5)/SR_HIGH*fs2.length));
+      charts.specSamp.data.datasets[0].data = specPts(fs2,dbs2,fLim2);
+      charts.specSamp.update('none');
+
+      // Aliasing demo
+      const aliasFreq = ratio < 1 ? fm - fs : (ratio < 2 ? Math.abs(fm - fs) : null);
+      const aliasData = [];
+      if (aliasFreq && aliasFreq > 0 && aliasFreq < fm) {
+        for (let i = 0; i < N; i += Math.max(1,Math.floor(N/400))) {
+          aliasData.push({ x: tMs[i], y: Math.sin(2*Math.PI*aliasFreq*(i/SR_HIGH)) });
+        }
+        document.getElementById('alias_note').textContent =
+          `欠采样（fs=${fs.toFixed(0)} Hz < 2fm=${(2*fm).toFixed(0)} Hz）时，频率 ${fm} Hz 的信号被混叠为 ${aliasFreq.toFixed(0)} Hz 的虚假分量（红色虚线）。`;
+      } else {
+        document.getElementById('alias_note').textContent =
+          `当前抽样率 fs=${fs.toFixed(0)} Hz ≥ 奈奎斯特率 ${fn.toFixed(0)} Hz，不发生混叠，可完美重建信号。`;
+      }
+      charts.alias.data.datasets[0].data = sub(Array.from(sig));
+      charts.alias.data.datasets[1].data = aliasData;
+      charts.alias.update('none');
+
+      // Status
+      const status = ratio >= 2 ? (ratio >= 3 ? '过采样 ✓' : '临界采样 ✓') : '欠采样 ✗';
+      document.getElementById('stat_status').textContent = status;
+      document.getElementById('stat_status').style.color = ratio >= 2 ? '#34d399' : '#f87171';
+      document.getElementById('stat_err').textContent = rmsErr;
+    }
+
+    function switchTab(btn, tabId) {
+      btn.closest('.chart-card').querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      btn.closest('.chart-card').querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    ['fm','fm2','ratio'].forEach(id=>document.getElementById(id).addEventListener('input',runSim));
+    ['sigType','reconType'].forEach(id=>document.getElementById(id).addEventListener('change',runSim));
+
+    initCharts();
+    runSim();
+  </script>
+</body>
+</html>

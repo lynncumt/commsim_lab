@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>实验三：数字调制与解调</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="lab-page">
+  <nav class="lab-nav">
+    <a href="../index.html">首页</a>
+    <span class="sep">/</span>
+    <span class="current">实验三：数字调制与解调</span>
+  </nav>
+
+  <div class="lab-main">
+    <aside class="control-panel">
+      <div class="panel-section">
+        <div class="panel-title">调制方式</div>
+        <select id="modType">
+          <option value="ask">2ASK（幅移键控）</option>
+          <option value="fsk">2FSK（频移键控）</option>
+          <option value="bpsk" selected>BPSK（二相相移键控）</option>
+          <option value="qpsk">QPSK（四相相移键控）</option>
+        </select>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">参数设置</div>
+        <div class="control-row">
+          <div class="control-label"><span>符号率 Rs</span><span class="val" id="lbl_rs">1000 baud</span></div>
+          <input type="range" id="rs" min="500" max="4000" step="500" value="1000">
+        </div>
+        <div class="control-row">
+          <div class="control-label"><span>载波频率 fc</span><span class="val" id="lbl_fc">8 kHz</span></div>
+          <input type="range" id="fc" min="4000" max="20000" step="1000" value="8000">
+        </div>
+        <div class="control-row" id="row_f2">
+          <div class="control-label"><span>FSK f₂</span><span class="val" id="lbl_f2">12 kHz</span></div>
+          <input type="range" id="f2" min="4000" max="20000" step="1000" value="12000">
+        </div>
+        <div class="control-row">
+          <div class="control-label"><span>信噪比 SNR</span><span class="val" id="lbl_snr">15 dB</span></div>
+          <input type="range" id="snr" min="0" max="30" step="1" value="15">
+        </div>
+        <div class="control-row">
+          <div class="control-label"><span>比特数</span><span class="val" id="lbl_nb">32</span></div>
+          <input type="range" id="nbits" min="16" max="64" step="8" value="32">
+        </div>
+      </div>
+
+      <button class="btn-run" onclick="runSim()">▶ 运行仿真</button>
+      <button class="btn-secondary" onclick="newBits()">随机比特序列</button>
+
+      <div class="panel-section">
+        <div class="panel-title">性能指标</div>
+        <div class="stats-row">
+          <div class="stat-box"><div class="stat-label">信号带宽</div><div class="stat-value" id="stat_bw">—</div></div>
+        </div>
+        <div class="stats-row" style="margin-top:8px">
+          <div class="stat-box"><div class="stat-label">理论误码率</div><div class="stat-value" id="stat_ber">—</div></div>
+        </div>
+        <div class="stats-row" style="margin-top:8px">
+          <div class="stat-box"><div class="stat-label">频谱利用率</div><div class="stat-value" id="stat_se">—</div></div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="charts-area">
+      <div class="theory-card">
+        <h4 id="theory_title">BPSK 原理</h4>
+        <div class="formula" id="theory_formula">s₁(t) = cos(2π fc t)，s₀(t) = cos(2π fc t + π) = −cos(2π fc t)</div>
+        <ul id="theory_list">
+          <li>相位差 180°，抗噪性最优（4种数字调制中误码率最低）</li>
+          <li>带宽 BW = 2Rs，频谱利用率 1 bit/s/Hz</li>
+          <li>需相干解调（本地载波恢复）</li>
+        </ul>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot"></div>比特序列（NRZ 参考）</div>
+        <div class="chart-wrap-sm"><canvas id="chartBits"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot" style="background:#818cf8"></div>已调信号（时域）</div>
+        <div class="chart-wrap"><canvas id="chartMod"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-title"><div class="dot" style="background:#34d399"></div>加噪后接收信号</div>
+        <div class="chart-wrap"><canvas id="chartRx"></canvas></div>
+      </div>
+
+      <!-- Row: spectrum + constellation -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="chart-card">
+          <div class="chart-card-title"><div class="dot" style="background:#fbbf24"></div>信号频谱</div>
+          <div class="chart-wrap"><canvas id="chartSpec"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-title"><div class="dot" style="background:#f87171"></div>星座图</div>
+          <div style="position:relative;height:180px">
+            <canvas id="chartConst"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/core/dsp.js"></script>
+  <script>
+    const SR = 80000;
+    let bits = null;
+    let charts = {};
+
+    function newBits() {
+      bits = DSP.randomBits(+document.getElementById('nbits').value);
+      runSim();
+    }
+
+    function makeLineChart(id, color, stepped=false, yMin=undefined, yMax=undefined) {
+      const ctx = document.getElementById(id).getContext('2d');
+      return new Chart(ctx, {
+        type:'line',
+        data:{ datasets:[{ data:[], borderColor:color, borderWidth:1.5, pointRadius:0,
+          stepped, fill:false }] },
+        options:{
+          animation:false, responsive:true, maintainAspectRatio:false,
+          scales:{
+            x:{type:'linear', grid:{color:'#334155'}, ticks:{color:'#94a3b8',maxTicksLimit:8,
+              callback:v=>v.toFixed(1)}, title:{display:true,text:'Time (ms)',color:'#94a3b8',font:{size:11}}},
+            y:{grid:{color:'#334155'}, ticks:{color:'#94a3b8'}, min:yMin, max:yMax}
+          },
+          plugins:{legend:{display:false}}
+        }
+      });
+    }
+
+    function makeSpecChart(id) {
+      const ctx = document.getElementById(id).getContext('2d');
+      return new Chart(ctx, {
+        type:'line',
+        data:{datasets:[{label:'Spectrum',data:[],borderColor:'rgb(251,191,36)',borderWidth:1.5,
+          pointRadius:0,fill:true,backgroundColor:'rgba(251,191,36,0.12)'}]},
+        options:{
+          animation:false,responsive:true,maintainAspectRatio:false,
+          scales:{
+            x:{type:'linear',title:{display:true,text:'Frequency (kHz)',color:'#94a3b8',font:{size:11}},
+              grid:{color:'#334155'},ticks:{color:'#94a3b8',callback:v=>(v/1000).toFixed(0)}},
+            y:{grid:{color:'#334155'},ticks:{color:'#94a3b8'},min:-80,
+              title:{display:true,text:'dB',color:'#94a3b8',font:{size:11}}}
+          },
+          plugins:{legend:{display:false}}
+        }
+      });
+    }
+
+    function makeScatterChart(id) {
+      const ctx = document.getElementById(id).getContext('2d');
+      return new Chart(ctx, {
+        type:'scatter',
+        data:{datasets:[
+          {label:'带噪声点',data:[],backgroundColor:'rgba(248,113,113,0.5)',pointRadius:4,pointHoverRadius:5},
+          {label:'理想点',data:[],backgroundColor:'rgb(56,189,248)',pointRadius:8,pointStyle:'crossRot',
+           borderColor:'rgb(56,189,248)',borderWidth:2}
+        ]},
+        options:{
+          animation:false,responsive:true,maintainAspectRatio:false,
+          scales:{
+            x:{min:-2,max:2,grid:{color:'#334155'},ticks:{color:'#94a3b8'},
+              title:{display:true,text:'I',color:'#94a3b8',font:{size:11}}},
+            y:{min:-2,max:2,grid:{color:'#334155'},ticks:{color:'#94a3b8'},
+              title:{display:true,text:'Q',color:'#94a3b8',font:{size:11}}}
+          },
+          plugins:{legend:{display:false}}
+        }
+      });
+    }
+
+    function initCharts() {
+      charts.bits = makeLineChart('chartBits','rgb(56,189,248)',true,-1.5,1.5);
+      charts.mod  = makeLineChart('chartMod','rgb(129,140,248)');
+      charts.rx   = makeLineChart('chartRx','rgb(52,211,153)');
+      charts.spec = makeSpecChart('chartSpec');
+      charts.const = makeScatterChart('chartConst');
+    }
+
+    function runSim() {
+      if (!bits) { newBits(); return; }
+
+      const mt   = document.getElementById('modType').value;
+      const rs   = +document.getElementById('rs').value;
+      const fc   = +document.getElementById('fc').value;
+      const f2   = +document.getElementById('f2').value;
+      const snr  = +document.getElementById('snr').value;
+      const spb  = Math.max(4, Math.round(SR / rs));
+
+      let modSig;
+      if (mt === 'ask')       modSig = DSP.modulateASK(bits, fc, SR, spb);
+      else if (mt === 'fsk')  modSig = DSP.modulateFSK(bits, fc, f2, SR, spb);
+      else if (mt === 'bpsk') modSig = DSP.modulateBPSK(bits, fc, SR, spb);
+      else                    modSig = DSP.modulateQPSK(bits, fc, SR, spb);
+
+      const rxSig = DSP.addAWGN(modSig, snr);
+
+      // NRZ reference
+      const spbRef = spb;
+      const nrzRef = [];
+      for (let b of bits) for (let j = 0; j < spbRef; j++) nrzRef.push(b > 0 ? 1 : -1);
+
+      const maxDisp = Math.min(modSig.length, SR * 0.005);
+      const toMs = (v, i) => ({ x: i / SR * 1000, y: v });
+      const sub = (arr, limit) => {
+        const step = Math.max(1, Math.floor(arr.length / Math.min(limit, 600)));
+        return arr.filter((_, i) => i % step === 0).slice(0, 600).map((v, i) => ({ x: i * step / SR * 1000, y: v }));
+      };
+
+      charts.bits.data.datasets[0].data = sub(nrzRef, maxDisp);
+      charts.mod.data.datasets[0].data  = sub(Array.from(modSig), maxDisp);
+      charts.rx.data.datasets[0].data   = sub(Array.from(rxSig), maxDisp);
+      charts.bits.update('none'); charts.mod.update('none'); charts.rx.update('none');
+
+      // Spectrum
+      const { freqs, mag } = DSP.spectrum(modSig, SR);
+      const dB = DSP.magTodB(mag);
+      const fLim = Math.round(Math.min(freqs.length, (fc * 3) / SR * freqs.length));
+      charts.spec.data.datasets[0].data = Array.from({length:Math.min(fLim,500)}, (_,i)=>{
+        const idx = Math.round(i * fLim / 500);
+        return { x: freqs[idx], y: dB[idx] };
+      });
+      charts.spec.update('none');
+
+      // Constellation
+      buildConstellation(mt, bits, snr, fc, SR, spb, f2);
+
+      // Stats
+      const bwMap = { ask: 2*rs, fsk: Math.abs(fc-f2)+2*rs, bpsk: 2*rs, qpsk: rs };
+      const berFn = { ask: DSP.berASK, fsk: DSP.berFSK, bpsk: DSP.berBPSK, qpsk: DSP.berQPSK };
+      const seMap = { ask:'1 bit/s/Hz', fsk:'< 1 bit/s/Hz', bpsk:'1 bit/s/Hz', qpsk:'2 bit/s/Hz' };
+      document.getElementById('stat_bw').textContent = (bwMap[mt]/1000).toFixed(1)+' kHz';
+      document.getElementById('stat_ber').textContent = berFn[mt](snr).toExponential(2);
+      document.getElementById('stat_se').textContent  = seMap[mt];
+
+      updateTheory(mt);
+    }
+
+    function buildConstellation(mt, bits, snr, fc, SR, spb, f2) {
+      const noiseStd = Math.sqrt(1 / (2 * Math.pow(10, snr / 10)));
+      let noisyPts = [], idealPts = [];
+
+      if (mt === 'bpsk') {
+        idealPts = [{ x:1,y:0 },{ x:-1,y:0 }];
+        for (let b of bits) {
+          const ix = b > 0 ? 1 : -1;
+          noisyPts.push({ x: ix + (Math.random()-0.5)*2*noiseStd*2, y: (Math.random()-0.5)*2*noiseStd*2 });
+        }
+      } else if (mt === 'qpsk') {
+        const sq2 = 1/Math.sqrt(2);
+        idealPts = [{x:sq2,y:sq2},{x:-sq2,y:sq2},{x:-sq2,y:-sq2},{x:sq2,y:-sq2}];
+        for (let i = 0; i < Math.floor(bits.length/2); i++) {
+          const b1 = bits[2*i]>0?1:0, b2 = bits[2*i+1]>0?1:0;
+          const ph = [Math.PI/4,3*Math.PI/4,-3*Math.PI/4,-Math.PI/4][b1*2+b2];
+          noisyPts.push({
+            x: Math.cos(ph)+(Math.random()-0.5)*2*noiseStd*2,
+            y: Math.sin(ph)+(Math.random()-0.5)*2*noiseStd*2
+          });
+        }
+      } else if (mt === 'ask') {
+        idealPts = [{x:1,y:0},{x:0,y:0}];
+        for (let b of bits) {
+          const ix = b > 0 ? 1 : 0;
+          noisyPts.push({ x: ix+(Math.random()-0.5)*2*noiseStd*1.5, y:(Math.random()-0.5)*2*noiseStd*1.5 });
+        }
+      } else { // FSK
+        idealPts = [{x:1,y:0},{x:-1,y:0}];
+        for (let b of bits) {
+          const ix = b > 0 ? 1 : -1;
+          noisyPts.push({ x: ix+(Math.random()-0.5)*2*noiseStd*2, y:(Math.random()-0.5)*2*noiseStd*2 });
+        }
+      }
+
+      charts.const.data.datasets[0].data = noisyPts;
+      charts.const.data.datasets[1].data = idealPts;
+      charts.const.update('none');
+    }
+
+    function updateTheory(t) {
+      const info = {
+        ask: ['2ASK（OOK）原理','s₁(t) = Ac·cos(2π fc t)；s₀(t) = 0',
+              ['幅度键控，实现简单，抗噪性能最弱','带宽 BW = 2Rs','频谱利用率 1 bit/s/Hz']],
+        fsk: ['2FSK 原理','s₁(t) = cos(2π f₁ t)；s₀(t) = cos(2π f₂ t)',
+              ['频率键控，抗噪性能较好','带宽 BW = |f₁-f₂| + 2Rs（两侧各Rs）','频谱利用率 < 1 bit/s/Hz']],
+        bpsk:['BPSK 原理','s₁(t) = cos(2π fc t)；s₀(t) = −cos(2π fc t)',
+              ['相位差 180°，抗噪最优','带宽 BW = 2Rs，频谱利用率 1 bit/s/Hz','需相干解调（本地载波恢复）']],
+        qpsk:['QPSK 原理','每2比特映射一个相位：00/01/10/11 → π/4,3π/4,−3π/4,−π/4',
+              ['4个相位点，频谱利用率 2 bit/s/Hz','带宽 BW = Rs（= Rb/2）','同等误码率条件下带宽只需BPSK一半']]
+      };
+      const [title,formula,list] = info[t];
+      document.getElementById('theory_title').textContent = title;
+      document.getElementById('theory_formula').textContent = formula;
+      document.getElementById('theory_list').innerHTML = list.map(l=>`<li>${l}</li>`).join('');
+      document.getElementById('row_f2').style.display = t==='fsk' ? '' : 'none';
+    }
+
+    function syncLabels() {
+      const fmt = (v,unit) => (+v>=1000?(+v/1000).toFixed(0)+'k':v)+' '+unit;
+      document.getElementById('lbl_rs').textContent = fmt(document.getElementById('rs').value,'baud');
+      document.getElementById('lbl_fc').textContent = fmt(document.getElementById('fc').value,'Hz');
+      document.getElementById('lbl_f2').textContent = fmt(document.getElementById('f2').value,'Hz');
+      document.getElementById('lbl_snr').textContent = document.getElementById('snr').value+' dB';
+      document.getElementById('lbl_nb').textContent  = document.getElementById('nbits').value;
+    }
+
+    ['rs','fc','f2','snr','nbits'].forEach(id => {
+      document.getElementById(id).addEventListener('input', ()=>{syncLabels();runSim();});
+    });
+    document.getElementById('modType').addEventListener('change', ()=>{updateTheory(document.getElementById('modType').value);runSim();});
+
+    initCharts();
+    syncLabels();
+    bits = DSP.randomBits(+document.getElementById('nbits').value);
+    updateTheory('bpsk');
+    runSim();
+  </script>
+</body>
+</html>
