@@ -18,6 +18,7 @@ from src.modules.digital_modulation import DigitalModulationWidget
 from src.modules.advanced_modulation import AdvancedModulationWidget
 from src.modules.error_coding import ErrorCodingWidget
 from src.modules.modern_systems import ModernSystemsWidget
+from src.tools.analysis_panel import AnalysisPanelWidget
 
 
 # ── Navigation menu data ─────────────────────────────────────────────────────
@@ -40,6 +41,13 @@ NAV_GROUPS = [
             ('advanced_mod',      '新型频带调制',         'QPSK/QAM/MSK', AdvancedModulationWidget),
             ('error_coding',      '差错控制编码',         'Hamming/LDPC/Polar', ErrorCodingWidget),
             ('modern_systems',    '现代通信系统',         'OFDM/MIMO/DVB-T', ModernSystemsWidget),
+        ]
+    },
+    {
+        'group': '综合工具',
+        'icon': '🔧',
+        'items': [
+            ('analysis_tools',    '综合分析工具',         '示波器/频谱/BER/星座图', AnalysisPanelWidget),
         ]
     },
 ]
