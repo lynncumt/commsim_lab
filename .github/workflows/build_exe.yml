@@ -1,0 +1,69 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ main, "claude/**" ]
+  workflow_dispatch:          # 允许手动触发
+
+jobs:
+  build-windows:
+    runs-on: windows-latest   # 真实 Windows 环境
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install PyQt5>=5.15.0 numpy scipy matplotlib pyinstaller
+
+      - name: Build EXE with PyInstaller
+        run: |
+          python -m PyInstaller commsim.spec --noconfirm --clean
+
+      - name: Verify EXE exists
+        run: |
+          if (Test-Path "dist\通信原理仿真软件.exe") {
+            Write-Host "BUILD SUCCESS"
+            Get-Item "dist\通信原理仿真软件.exe" | Select-Object Name, Length
+          } else {
+            Write-Host "BUILD FAILED - EXE not found"
+            exit 1
+          }
+
+      - name: Upload EXE as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: 通信原理仿真软件-Windows-EXE
+          path: dist\通信原理仿真软件.exe
+          retention-days: 30
+
+      - name: Create Release (on main branch only)
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: "通信原理仿真软件 v1.0.${{ github.run_number }}"
+          body: |
+            ## 通信原理仿真软件 Windows 版本
+
+            ### 安装说明
+            1. 下载 `通信原理仿真软件.exe`
+            2. 直接双击运行，无需安装 Python
+            3. 默认账号：`admin` / `admin123`
+
+            ### 包含功能
+            - 5个基础实验模块（AM/FM/PCM/HDB3/2PSK等）
+            - 3个扩展模块（QPSK/OFDM/MIMO/极化码等）
+            - 综合分析工具（示波器/频谱仪/BER/星座图）
+          files: dist\通信原理仿真软件.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
