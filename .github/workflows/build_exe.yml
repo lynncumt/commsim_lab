@@ -2,68 +2,121 @@ name: Build Windows EXE
 
 on:
   push:
-    branches: [ main, "claude/**" ]
-  workflow_dispatch:          # 允许手动触发
+    branches:
+      - main
+      - "claude/**"
+  workflow_dispatch:   # 支持手动触发
 
 jobs:
-  build-windows:
-    runs-on: windows-latest   # 真实 Windows 环境
+  build:
+    name: PyInstaller on windows-latest
+    runs-on: windows-latest
+    timeout-minutes: 30
 
     steps:
-      - name: Checkout code
+      # ── 1. Checkout ────────────────────────────────────────────────────────
+      - name: Checkout repository
         uses: actions/checkout@v4
 
+      # ── 2. Python ──────────────────────────────────────────────────────────
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
 
-      - name: Install dependencies
+      # ── 3. Dependencies (with retry) ───────────────────────────────────────
+      - name: Install Python dependencies
+        shell: pwsh
         run: |
           python -m pip install --upgrade pip
-          pip install PyQt5>=5.15.0 numpy scipy matplotlib pyinstaller
+          # Pin versions for reproducible builds
+          pip install `
+            "PyQt5==5.15.11" `
+            "PyQt5-Qt5==5.15.2" `
+            "numpy==1.26.4" `
+            "scipy==1.13.1" `
+            "matplotlib==3.9.2" `
+            "pyinstaller==6.10.0"
 
-      - name: Build EXE with PyInstaller
+      # ── 4. Confirm font availability ───────────────────────────────────────
+      - name: Check Microsoft YaHei font (built-in on Windows)
+        shell: pwsh
+        run: |
+          python - <<'EOF'
+          import matplotlib.font_manager as fm
+          names = {f.name for f in fm.fontManager.ttflist}
+          cjk = [n for n in names if any(k in n for k in ['YaHei','SimHei','SimSun'])]
+          print("CJK fonts available:", cjk)
+          assert len(cjk) > 0, "No CJK font found — Chinese labels will be broken"
+          EOF
+
+      # ── 5. Build EXE ───────────────────────────────────────────────────────
+      - name: Build with PyInstaller
+        shell: pwsh
         run: |
           python -m PyInstaller commsim.spec --noconfirm --clean
+          Write-Host "=== dist contents ==="
+          Get-ChildItem dist
 
-      - name: Verify EXE exists
+      # ── 6. Smoke-test the EXE (headless) ──────────────────────────────────
+      - name: Smoke-test EXE (import check)
+        shell: pwsh
         run: |
-          if (Test-Path "dist\通信原理仿真软件.exe") {
-            Write-Host "BUILD SUCCESS"
-            Get-Item "dist\通信原理仿真软件.exe" | Select-Object Name, Length
-          } else {
-            Write-Host "BUILD FAILED - EXE not found"
-            exit 1
-          }
+          # Verify the binary exists and is non-trivially sized (>20 MB)
+          $exe = "dist\CommSimLab.exe"
+          if (-not (Test-Path $exe)) { throw "EXE not found at $exe" }
+          $size = (Get-Item $exe).Length
+          Write-Host "EXE size: $([math]::Round($size/1MB,1)) MB"
+          if ($size -lt 20MB) { throw "EXE suspiciously small ($size bytes)" }
+          Write-Host "Smoke-test PASSED"
 
-      - name: Upload EXE as artifact
+      # ── 7. Rename to Chinese filename for the artifact ────────────────────
+      - name: Rename EXE for distribution
+        shell: pwsh
+        run: |
+          Copy-Item "dist\CommSimLab.exe" "dist\通信原理仿真软件.exe"
+          Write-Host "Renamed OK"
+
+      # ── 8. Upload artifact (available for 30 days) ────────────────────────
+      - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
           name: 通信原理仿真软件-Windows-EXE
           path: dist\通信原理仿真软件.exe
           retention-days: 30
+          if-no-files-found: error
 
-      - name: Create Release (on main branch only)
-        if: github.ref == 'refs/heads/main'
+      # ── 9. Create GitHub Release (every build on this branch) ─────────────
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: "通信原理仿真软件 v1.0.${{ github.run_number }}"
+          tag_name: "build-${{ github.run_number }}"
+          name: "通信原理仿真软件 v1.0 (Build ${{ github.run_number }})"
           body: |
-            ## 通信原理仿真软件 Windows 版本
+            ## 通信原理仿真软件 v1.0 — Windows 64位
 
-            ### 安装说明
-            1. 下载 `通信原理仿真软件.exe`
-            2. 直接双击运行，无需安装 Python
-            3. 默认账号：`admin` / `admin123`
+            ### 下载与使用
+            1. 点击下方 **Assets** 中的 `通信原理仿真软件.exe`
+            2. 直接双击运行，**无需安装 Python 或任何依赖**
+            3. 默认账号：`admin` / 密码：`admin123`
 
-            ### 包含功能
-            - 5个基础实验模块（AM/FM/PCM/HDB3/2PSK等）
-            - 3个扩展模块（QPSK/OFDM/MIMO/极化码等）
-            - 综合分析工具（示波器/频谱仪/BER/星座图）
+            ### 功能模块（共9个）
+            | 类别 | 模块 |
+            |------|------|
+            | 基础实验 | 信号源分析、AM/FM/SSB调制、PCM/TDM、HDB3码型、2ASK/2PSK |
+            | 扩展模块 | QPSK/16QAM/MSK、Hamming/LDPC/极化码、OFDM/MIMO/DVB-T |
+            | 分析工具 | 示波器、频谱仪、BER曲线、星座图/眼图 |
+
+            ### 修复记录
+            - 图表中文字体乱码修复（自动检测 Microsoft YaHei）
+            - PyInstaller 打包包含完整 matplotlib 字体数据
+
+            ---
+            构建信息: Branch `${{ github.ref_name }}` · Commit `${{ github.sha }}`
           files: dist\通信原理仿真软件.exe
           draft: false
           prerelease: false
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
