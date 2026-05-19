@@ -4,35 +4,82 @@ from PyQt5.QtWidgets import (
     QLabel, QPushButton, QScrollArea, QSizePolicy, QGroupBox
 )
 from PyQt5.QtCore import Qt
+import platform
 import matplotlib
 matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 
 
-# Configure matplotlib dark theme
+# ── Chinese font detection ────────────────────────────────────────────────────
+def _find_chinese_font() -> str:
+    """Return the first available CJK font name for the current platform."""
+    system = platform.system()
+    if system == 'Windows':
+        candidates = [
+            'Microsoft YaHei', '微软雅黑',
+            'SimHei', '黑体',
+            'SimSun', '宋体',
+            'FangSong', 'KaiTi',
+        ]
+    elif system == 'Darwin':
+        candidates = [
+            'PingFang SC', 'Heiti SC', 'STHeiti',
+            'Arial Unicode MS',
+        ]
+    else:  # Linux / embedded
+        candidates = [
+            'WenQuanYi Micro Hei', 'WenQuanYi Zen Hei',
+            'Noto Sans CJK SC', 'Noto Sans SC',
+            'Source Han Sans SC', 'Droid Sans Fallback',
+        ]
+
+    available = {f.name for f in fm.fontManager.ttflist}
+    for name in candidates:
+        if name in available:
+            return name
+
+    # Last resort: search font files by common CJK filename patterns
+    for f in fm.fontManager.ttflist:
+        low = f.name.lower()
+        if any(k in low for k in ('cjk', 'chinese', 'heiti', 'yahei', 'noto')):
+            return f.name
+
+    return 'DejaVu Sans'   # ASCII fallback — won't show CJK but won't crash
+
+
+_CN_FONT = _find_chinese_font()
+
+# ── Matplotlib global style (dark theme + Chinese font) ───────────────────────
 plt.rcParams.update({
-    'figure.facecolor':  '#111629',
-    'axes.facecolor':    '#0d1826',
-    'axes.edgecolor':    '#2a3a5a',
-    'axes.labelcolor':   '#90a4ae',
-    'xtick.color':       '#607d8b',
-    'ytick.color':       '#607d8b',
-    'text.color':        '#cfd8dc',
-    'grid.color':        '#1e2a4a',
-    'grid.linestyle':    '--',
-    'grid.linewidth':    0.5,
-    'lines.linewidth':   1.8,
-    'legend.facecolor':  '#111629',
-    'legend.edgecolor':  '#2a3a5a',
-    'legend.fontsize':   9,
-    'axes.titlesize':    11,
-    'axes.labelsize':    10,
-    'xtick.labelsize':   9,
-    'ytick.labelsize':   9,
-    'font.family':       'sans-serif',
+    # Font — put the CJK font first so Chinese chars render correctly
+    'font.family':          'sans-serif',
+    'font.sans-serif':      [_CN_FONT, 'Microsoft YaHei', 'SimHei',
+                             'DejaVu Sans', 'Arial', 'sans-serif'],
+    'axes.unicode_minus':   False,   # use ASCII minus instead of U+2212
+
+    # Dark colour scheme
+    'figure.facecolor':     '#111629',
+    'axes.facecolor':       '#0d1826',
+    'axes.edgecolor':       '#2a3a5a',
+    'axes.labelcolor':      '#90a4ae',
+    'xtick.color':          '#607d8b',
+    'ytick.color':          '#607d8b',
+    'text.color':           '#cfd8dc',
+    'grid.color':           '#1e2a4a',
+    'grid.linestyle':       '--',
+    'grid.linewidth':       0.5,
+    'lines.linewidth':      1.8,
+    'legend.facecolor':     '#111629',
+    'legend.edgecolor':     '#2a3a5a',
+    'legend.fontsize':      9,
+    'axes.titlesize':       11,
+    'axes.labelsize':       10,
+    'xtick.labelsize':      9,
+    'ytick.labelsize':      9,
 })
 
 # Color palette for signal plots

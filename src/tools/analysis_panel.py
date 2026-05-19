@@ -19,6 +19,25 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 
+# Reuse the font detection already done in base_module (imported lazily to
+# avoid circular imports); fall back to a safe inline detection.
+try:
+    from src.ui.base_module import _CN_FONT
+except Exception:
+    import platform, matplotlib.font_manager as _fm
+    _sys = platform.system()
+    _candidates = (['Microsoft YaHei', 'SimHei'] if _sys == 'Windows'
+                   else ['WenQuanYi Micro Hei', 'Noto Sans CJK SC', 'DejaVu Sans'])
+    _avail = {f.name for f in _fm.fontManager.ttflist}
+    _CN_FONT = next((c for c in _candidates if c in _avail), 'DejaVu Sans')
+
+import matplotlib.pyplot as _plt
+_plt.rcParams.update({
+    'font.family':        'sans-serif',
+    'font.sans-serif':    [_CN_FONT, 'Microsoft YaHei', 'SimHei', 'DejaVu Sans'],
+    'axes.unicode_minus': False,
+})
+
 COLORS = ['#4fc3f7', '#ef5350', '#66bb6a', '#ffa726', '#ab47bc',
           '#26c6da', '#ff7043', '#d4e157', '#ec407a', '#42a5f5']
 
