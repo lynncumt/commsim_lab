@@ -264,7 +264,7 @@ class ErrorCodingWidget(BaseModuleWidget):
             f'未编码 BER ≈ {ber_uncoded:.4f}\n'
             f'编码后 BER ≈ {ber_coded:.4f}',
             transform=axes[5].transAxes, fontsize=10, color='#cfd8dc',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
     def _plot_conv(self, axes, n_bits, snr_db):
@@ -340,7 +340,7 @@ class ErrorCodingWidget(BaseModuleWidget):
             f'  未编码 BER ≈ {ber_uncoded:.4f}\n'
             f'  编码后 BER ≈ {ber_coded:.4f}',
             transform=axes[5].transAxes, fontsize=10, color='#cfd8dc',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
     def _plot_ber_all(self, axes):
@@ -387,7 +387,7 @@ class ErrorCodingWidget(BaseModuleWidget):
                       '  极化码/LDPC 已接近 Shannon 极限')
         axes[1].text(0.05, 0.5, gains_text, transform=axes[1].transAxes,
                      fontsize=10, color='#cfd8dc', verticalalignment='center',
-                     fontfamily='monospace',
+                     fontfamily='sans-serif',
                      bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
         # Code history timeline
@@ -405,7 +405,7 @@ class ErrorCodingWidget(BaseModuleWidget):
             color = COLORS[i % len(COLORS)]
             axes[2].text(0.05, 0.9 - i * 0.12, desc,
                          transform=axes[2].transAxes, fontsize=9,
-                         color=color, fontfamily='monospace')
+                         color=color, fontfamily='sans-serif')
 
         axes[2].set_title('信道编码发展历程')
 
@@ -436,7 +436,7 @@ class ErrorCodingWidget(BaseModuleWidget):
             '    → 极化码\n\n'
             '极化码首次进入国际标准！',
             transform=axes[4].transAxes, fontsize=10, color='#cfd8dc',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
         axes[5].axis('off')
@@ -451,5 +451,5 @@ class ErrorCodingWidget(BaseModuleWidget):
             'Shannon 极限！\n\n'
             '编码的目标就是逼近此极限。',
             transform=axes[5].transAxes, fontsize=10, color='#90a4ae',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#0d1826', alpha=0.6))

@@ -274,21 +274,21 @@ class ModernSystemsWidget(BaseModuleWidget):
             f'PAPR = {papr_db:.1f} dB\n'
             f'(PAPR是OFDM主要缺点)',
             transform=axes[4].transAxes, fontsize=10, color='#cfd8dc',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
         axes[5].axis('off')
         axes[5].text(0.1, 0.5,
             'OFDM 关键技术\n\n'
-            '✓ 子载波正交性(IDFT/DFT)\n'
-            '✓ 循环前缀消除ISI\n'
-            '✓ 频域均衡只需单抽头\n\n'
+            '[+] 子载波正交性(IDFT/DFT)\n'
+            '[+] 循环前缀消除ISI\n'
+            '[+] 频域均衡只需单抽头\n\n'
             '应用: LTE/5G, Wi-Fi,\n'
             '      DVB-T, ADSL\n\n'
             'CP条件: TCP ≥ 最大时延扩展\n'
             f'  当前: CP={cp_len} 样本',
             transform=axes[5].transAxes, fontsize=10, color='#90a4ae',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#0d1826', alpha=0.6))
 
     def _plot_mimo(self, axes, n_tx, n_rx, n_bits, snr_db):
@@ -349,12 +349,12 @@ class ModernSystemsWidget(BaseModuleWidget):
             f'接收天线: nR = {n_rx}\n'
             f'总天线数: {n_tx + n_rx}\n\n'
             f'Alamouti STBC (nT=2时)\n'
-            f'  ✓ 分集增益 = {min(n_tx, n_rx) * max(n_tx, n_rx)}\n'
+            f'  [+] 分集增益 = {min(n_tx, n_rx) * max(n_tx, n_rx)}\n'
             f'  复用增益 = 1 (单流)\n\n'
             f'仿真 BER = {ber_stbc:.4f}\n'
             f'信噪比 = {snr_db} dB',
             transform=axes[4].transAxes, fontsize=10, color='#cfd8dc',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
         axes[5].axis('off')
@@ -371,7 +371,7 @@ class ModernSystemsWidget(BaseModuleWidget):
             '  r=0: 最大分集\n'
             '  r=min(nT,nR): 最大复用',
             transform=axes[5].transAxes, fontsize=10, color='#90a4ae',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#0d1826', alpha=0.6))
 
     def _plot_fhss(self, axes, n_bits, snr_db):
@@ -439,11 +439,11 @@ class ModernSystemsWidget(BaseModuleWidget):
             f'跳频带宽: {bw_fh:.0f} Hz\n\n'
             f'处理增益: PG ≈ {pg:.1f} dB\n\n'
             f'抗干扰能力:\n'
-            f'  ✓ 抗单频干扰\n'
-            f'  ✓ 抗多径衰落\n'
-            f'  ✓ 低截获概率(LPI)',
+            f'  [+] 抗单频干扰\n'
+            f'  [+] 抗多径衰落\n'
+            f'  [+] 低截获概率(LPI)',
             transform=axes[3].transAxes, fontsize=10, color='#cfd8dc',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
         axes[4].axis('off')
@@ -459,7 +459,7 @@ class ModernSystemsWidget(BaseModuleWidget):
             '  FHSS: 跳频扩频\n'
             '  DSSS: 直扩 (CDMA)',
             transform=axes[4].transAxes, fontsize=10, color='#90a4ae',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#0d1826', alpha=0.6))
 
         axes[5].axis('off')
@@ -556,7 +556,7 @@ class ModernSystemsWidget(BaseModuleWidget):
             f'均衡方式: 频域单抽头\n'
             f'  Ŷ = Y / Ĥ',
             transform=axes[4].transAxes, fontsize=10, color='#cfd8dc',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
         axes[5].axis('off')
@@ -572,7 +572,7 @@ class ModernSystemsWidget(BaseModuleWidget):
             '4. 深度学习:\n'
             '   5G中的新方向',
             transform=axes[5].transAxes, fontsize=10, color='#90a4ae',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#0d1826', alpha=0.6))
 
     def _plot_dvbt(self, axes, snr_db):
@@ -630,7 +630,7 @@ class ModernSystemsWidget(BaseModuleWidget):
             '  应用: 地面数字电视广播\n'
             '  标准: ETSI EN 300 744',
             transform=axes[2].transAxes, fontsize=9, color='#cfd8dc',
-            verticalalignment='top', fontfamily='monospace',
+            verticalalignment='top', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
         axes[3].axis('off')
@@ -647,7 +647,7 @@ class ModernSystemsWidget(BaseModuleWidget):
             '  → 保护间隔插入\n'
             '  → 射频发射',
             transform=axes[3].transAxes, fontsize=9, color='#cfd8dc',
-            verticalalignment='top', fontfamily='monospace',
+            verticalalignment='top', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
         for i in range(4, 6):
@@ -664,5 +664,5 @@ class ModernSystemsWidget(BaseModuleWidget):
             '中国标准: DTMB\n'
             '  (地面数字多媒体广播)',
             transform=axes[4].transAxes, fontsize=10, color='#90a4ae',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#0d1826', alpha=0.6))

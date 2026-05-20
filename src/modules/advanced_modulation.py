@@ -228,7 +228,7 @@ class AdvancedModulationWidget(BaseModuleWidget):
             f'QPSK 频谱效率: 2 bit/s/Hz\n'
             f'比 BPSK 高 2倍',
             transform=axes[4].transAxes, fontsize=10, color='#cfd8dc',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
         axes[5].axis('off')
@@ -242,7 +242,7 @@ class AdvancedModulationWidget(BaseModuleWidget):
             '  11 → (-1,-1) = -135°\n\n'
             '相位集合: {±45°, ±135°}',
             transform=axes[5].transAxes, fontsize=10, color='#90a4ae',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#0d1826', alpha=0.6))
 
     def _plot_16qam(self, axes, bits, fc, fs, rb, snr_db):
@@ -319,7 +319,7 @@ class AdvancedModulationWidget(BaseModuleWidget):
             f'是 QPSK 的 2 倍\n'
             f'但需要更高 SNR',
             transform=axes[4].transAxes, fontsize=10, color='#cfd8dc',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
         axes[5].axis('off')
@@ -333,7 +333,7 @@ class AdvancedModulationWidget(BaseModuleWidget):
             '应用: 5G NR, LTE, Wi-Fi\n'
             '(自适应调制编码 AMC)',
             transform=axes[5].transAxes, fontsize=10, color='#90a4ae',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#0d1826', alpha=0.6))
 
     def _plot_msk(self, axes, bits, fc, fs, rb, snr_db):
@@ -392,15 +392,15 @@ class AdvancedModulationWidget(BaseModuleWidget):
             'MSK 最小频移键控\n\n'
             'h = 0.5 (最小频移)\n\n'
             '特点:\n'
-            '  ✓ 连续相位 (CPFSK)\n'
-            '  ✓ 恒定包络\n'
-            '  ✓ 带外衰减快\n'
-            '  ✓ 频谱效率较高\n\n'
+            '  [+] 连续相位 (CPFSK)\n'
+            '  [+] 恒定包络\n'
+            '  [+] 带外衰减快\n'
+            '  [+] 频谱效率较高\n\n'
             f'  f0 = {fc:.0f} Hz (发"0")\n'
             f'  f1 = {fc+rb/2:.0f} Hz (发"1")\n'
             f'  Δf = Rb/2 = {rb/2:.1f} Hz',
             transform=axes[5].transAxes, fontsize=10, color='#90a4ae',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#0d1826', alpha=0.6))
 
     def _plot_ber(self):
@@ -451,14 +451,14 @@ class AdvancedModulationWidget(BaseModuleWidget):
         axes[3].text(0.1, 0.5,
             '调制阶数与系统性能权衡\n\n'
             '调制阶数越高:\n'
-            '  ✓ 频谱效率越高\n'
-            '  ✗ 需要更高 SNR\n'
-            '  ✗ 对相位噪声更敏感\n\n'
+            '  [+] 频谱效率越高\n'
+            '  [-] 需要更高 SNR\n'
+            '  [-] 对相位噪声更敏感\n\n'
             '5G NR 最高支持 256QAM\n'
             '需要极好的信道质量\n'
             '(MCS 28/29)',
             transform=axes[3].transAxes, fontsize=10, color='#cfd8dc',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
         self.canvas.fig.tight_layout(pad=1.5)

@@ -27,14 +27,18 @@ except Exception:
     import platform, matplotlib.font_manager as _fm
     _sys = platform.system()
     _candidates = (['Microsoft YaHei', 'SimHei'] if _sys == 'Windows'
-                   else ['WenQuanYi Micro Hei', 'Noto Sans CJK SC', 'DejaVu Sans'])
+                   else ['WenQuanYi Zen Hei', 'WenQuanYi Micro Hei',
+                         'Noto Sans CJK SC', 'Noto Sans SC', 'DejaVu Sans'])
     _avail = {f.name for f in _fm.fontManager.ttflist}
     _CN_FONT = next((c for c in _candidates if c in _avail), 'DejaVu Sans')
 
 import matplotlib.pyplot as _plt
 _plt.rcParams.update({
     'font.family':        'sans-serif',
-    'font.sans-serif':    [_CN_FONT, 'Microsoft YaHei', 'SimHei', 'DejaVu Sans'],
+    'font.sans-serif':    [_CN_FONT, 'Microsoft YaHei', 'SimHei',
+                           'WenQuanYi Zen Hei', 'Noto Sans CJK SC', 'DejaVu Sans'],
+    'font.monospace':     [_CN_FONT, 'Microsoft YaHei', 'SimHei',
+                           'WenQuanYi Zen Hei', 'DejaVu Sans Mono', 'monospace'],
     'axes.unicode_minus': False,
 })
 
@@ -250,7 +254,7 @@ class OscilloscopeTab(QWidget):
                 f'  采样率 = {fs} Hz\n'
                 f'  显示点数 = {len(t)}',
                 transform=ax1.transAxes, fontsize=11, color='#cfd8dc',
-                verticalalignment='top', fontfamily='monospace',
+                verticalalignment='top', fontfamily='sans-serif',
                 bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.9))
 
         self._fig.tight_layout(pad=1.5)

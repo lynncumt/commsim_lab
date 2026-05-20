@@ -58,7 +58,11 @@ plt.rcParams.update({
     # Font — put the CJK font first so Chinese chars render correctly
     'font.family':          'sans-serif',
     'font.sans-serif':      [_CN_FONT, 'Microsoft YaHei', 'SimHei',
+                             'WenQuanYi Zen Hei', 'Noto Sans CJK SC',
                              'DejaVu Sans', 'Arial', 'sans-serif'],
+    'font.monospace':       [_CN_FONT, 'Microsoft YaHei', 'SimHei',
+                             'WenQuanYi Zen Hei', 'DejaVu Sans Mono',
+                             'Courier New', 'monospace'],
     'axes.unicode_minus':   False,   # use ASCII minus instead of U+2212
 
     # Dark colour scheme
