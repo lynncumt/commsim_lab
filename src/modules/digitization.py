@@ -162,10 +162,10 @@ class DigitizationWidget(BaseModuleWidget):
                 f'实际采样率:   fs = {fs_sample:.1f} Hz\n'
                 f'采样率/奈频:  {factor:.1f}×\n\n'
                 f'重建SNR: {snr:.1f} dB\n'
-                f'{"✓ 满足奈奎斯特准则" if factor >= 2 else "✗ 不满足奈奎斯特准则 (混叠!)"}')
+                f'{"[+] 满足奈奎斯特准则" if factor >= 2 else "[-] 不满足奈奎斯特准则 (混叠!)"}')
         axes[4].text(0.1, 0.5, info, transform=axes[4].transAxes,
                      fontsize=11, color='#cfd8dc', verticalalignment='center',
-                     fontfamily='monospace',
+                     fontfamily='sans-serif',
                      bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
         axes[5].axis('off')
@@ -178,7 +178,7 @@ class DigitizationWidget(BaseModuleWidget):
                       f'当前状态: fs/fm = {factor:.1f}×')
         axes[5].text(0.1, 0.5, alias_info, transform=axes[5].transAxes,
                      fontsize=10, color='#90a4ae', verticalalignment='center',
-                     fontfamily='monospace',
+                     fontfamily='sans-serif',
                      bbox=dict(boxstyle='round', facecolor='#0d1826', alpha=0.6))
 
     def _plot_pcm(self, axes, t, msg, fm, fs, n_bits):
@@ -234,7 +234,7 @@ class DigitizationWidget(BaseModuleWidget):
             f'理论SQNR = 6.02×{n_bits} + 1.76\n'
             f'         = {sqnr:.2f} dB',
             transform=axes[4].transAxes, fontsize=10, color='#cfd8dc',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
         # Histogram of quantization error
@@ -290,22 +290,22 @@ class DigitizationWidget(BaseModuleWidget):
             f'  δ 太大 → 颗粒噪声增大\n'
             f'  最优 δ 需权衡两者',
             transform=axes[4].transAxes, fontsize=10, color='#cfd8dc',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
         axes[5].axis('off')
         axes[5].text(0.1, 0.5,
             '增量调制与PCM比较\n\n'
             '优点:\n'
-            '  ✓ 电路简单\n'
-            '  ✓ 编解码只需1bit\n'
-            '  ✓ 同步要求低\n\n'
+            '  [+] 电路简单\n'
+            '  [+] 编解码只需1bit\n'
+            '  [+] 同步要求低\n\n'
             '缺点:\n'
-            '  ✗ 动态范围有限\n'
-            '  ✗ 存在斜率过载\n'
-            '  ✗ 信噪比低于PCM',
+            '  [-] 动态范围有限\n'
+            '  [-] 存在斜率过载\n'
+            '  [-] 信噪比低于PCM',
             transform=axes[5].transAxes, fontsize=10, color='#90a4ae',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#0d1826', alpha=0.6))
 
     def _plot_tdm(self, axes, fm, fs):
@@ -361,7 +361,7 @@ class DigitizationWidget(BaseModuleWidget):
         frame_text += f'帧率 = {fs/n_ch:.0f} 帧/s'
         axes[3].text(0.1, 0.5, frame_text, transform=axes[3].transAxes,
                      fontsize=10, color='#cfd8dc', verticalalignment='center',
-                     fontfamily='monospace',
+                     fontfamily='sans-serif',
                      bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
         # SNR of recovered channels
@@ -385,5 +385,5 @@ class DigitizationWidget(BaseModuleWidget):
             f'  每路速率: {fs/n_ch:.0f} Sa/s\n\n'
             '应用: PCM电话、数字广播',
             transform=axes[5].transAxes, fontsize=10, color='#90a4ae',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#0d1826', alpha=0.6))

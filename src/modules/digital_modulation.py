@@ -246,7 +246,7 @@ class DigitalModulationWidget(BaseModuleWidget):
             f'理论误码率:\n'
             f'  {self._theory_ber_str(mod_idx, snr_db, coherent)}',
             transform=axes[5].transAxes, fontsize=10, color='#cfd8dc',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
         self.canvas.fig.tight_layout(pad=1.5)
@@ -342,7 +342,7 @@ class DigitalModulationWidget(BaseModuleWidget):
             '  2PSK 抗噪声性能最佳\n'
             '  比 2ASK 好约 6 dB',
             transform=axes[2].transAxes, fontsize=10, color='#cfd8dc',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
         axes[3].axis('off')
@@ -356,7 +356,7 @@ class DigitalModulationWidget(BaseModuleWidget):
             '2FSK非相干比相干:\n'
             '  约差 0.5~1 dB',
             transform=axes[3].transAxes, fontsize=10, color='#90a4ae',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#0d1826', alpha=0.6))
 
         for i in range(4, 6):

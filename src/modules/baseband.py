@@ -253,7 +253,7 @@ class BasebandWidget(BaseModuleWidget):
             f'眼图开合越大 → ISI越小\n'
             f'眼图开合越小 → ISI越大',
             transform=axes[5].transAxes, fontsize=10, color='#cfd8dc',
-            verticalalignment='center', fontfamily='monospace',
+            verticalalignment='center', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
 
     def _plot_all_codes(self, axes, bits, sps, snr_db, beta):
@@ -304,5 +304,5 @@ class BasebandWidget(BaseModuleWidget):
             'HDB3 是 PCM 系统标准码型\n'
             '(E1/T1 电话网使用)',
             transform=axes[5].transAxes, fontsize=10, color='#cfd8dc',
-            verticalalignment='top', fontfamily='monospace',
+            verticalalignment='top', fontfamily='sans-serif',
             bbox=dict(boxstyle='round', facecolor='#1a2a4a', alpha=0.8))
