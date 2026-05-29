@@ -1,0 +1,36 @@
+<!-- 党建思政精品课程库 -->
+<view class="container">
+  <view class="intro-card card">
+    <rich-text nodes="{{intro}}"></rich-text>
+  </view>
+
+  <view wx:for="{{categories}}" wx:key="key" class="category-block">
+    <view class="category-header">
+      <text class="category-num">{{item.num}}</text>
+      <text class="category-name">{{item.name}}</text>
+    </view>
+    <view class="course-list card">
+      <view class="course-item" wx:for="{{item.courses}}" wx:key="index" wx:for-item="course" bindtap="viewCourse" data-course="{{course}}">
+        <text class="course-index">{{index + 1}}.</text>
+        <view class="course-info">
+          <text class="course-title">{{course.title}}</text>
+          <text wx:if="{{course.teacher}}" class="course-teacher">主讲：{{course.teacher}}</text>
+        </view>
+        <text wx:if="{{course.videoUrl}}" class="play-btn">▶</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 课程详情弹窗 -->
+  <view class="modal-mask" wx:if="{{showModal}}" bindtap="closeModal">
+    <view class="modal-content" catchtap="">
+      <view class="modal-close" bindtap="closeModal">×</view>
+      <text class="modal-title">{{currentCourse.title}}</text>
+      <text wx:if="{{currentCourse.teacher}}" class="modal-sub">主讲教师：{{currentCourse.teacher}}</text>
+      <view class="modal-body">
+        <rich-text nodes="{{currentCourse.description}}"></rich-text>
+      </view>
+      <button wx:if="{{currentCourse.videoUrl}}" class="btn-play" bindtap="playVideo" data-url="{{currentCourse.videoUrl}}">观看课程视频</button>
+    </view>
+  </view>
+</view>

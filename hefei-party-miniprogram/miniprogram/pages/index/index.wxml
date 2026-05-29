@@ -1,0 +1,81 @@
+<!-- 首页 -->
+<view class="index-container">
+  <!-- 顶部 Banner -->
+  <view class="banner">
+    <image class="banner-img" src="../../images/banner.png" mode="widthFix" />
+    <view class="banner-text">
+      <text class="banner-title">合肥城市学院</text>
+      <text class="banner-subtitle">校企党建互助</text>
+    </view>
+  </view>
+
+  <!-- 7个主要模块 -->
+  <view class="section-title">功能导航</view>
+  <view class="main-grid">
+    <view class="grid-item" bindtap="goTo" data-url="/pages/school-overview/index">
+      <view class="grid-icon school-icon">🏫</view>
+      <text class="grid-text">学校概况</text>
+    </view>
+    <view class="grid-item" bindtap="goTo" data-url="/pages/party-intro/index">
+      <view class="grid-icon party-icon">🤝</view>
+      <text class="grid-text">校企党建互助简介</text>
+    </view>
+    <view class="grid-item" bindtap="goTo" data-url="/pages/party-resources/index">
+      <view class="grid-icon resource-icon">📚</view>
+      <text class="grid-text">学校党建思政资源</text>
+    </view>
+    <view class="grid-item" bindtap="goTo" data-url="/pages/expert-database/index">
+      <view class="grid-icon expert-icon">👨‍🏫</view>
+      <text class="grid-text">党建思政专家库</text>
+    </view>
+    <view class="grid-item" bindtap="goTo" data-url="/pages/courses/index">
+      <view class="grid-icon course-icon">🎓</view>
+      <text class="grid-text">党建思政精品课程库</text>
+    </view>
+    <view class="grid-item" bindtap="goTo" data-url="/pages/cases/index">
+      <view class="grid-icon case-icon">📰</view>
+      <text class="grid-text">校企党建互助案例采撷</text>
+    </view>
+    <view class="grid-item full-width" bindtap="goTo" data-url="/pages/contact/index">
+      <view class="grid-icon contact-icon">📬</view>
+      <text class="grid-text">党建互助 · 联系我们</text>
+    </view>
+  </view>
+
+  <!-- 合城动态 -->
+  <view class="section-title">合城动态</view>
+  <view class="news-list card">
+    <block wx:if="{{newsList.length > 0}}">
+      <view class="news-item" wx:for="{{newsList}}" wx:key="_id" bindtap="goToCase" data-id="{{item._id}}">
+        <view class="news-content">
+          <text class="news-title">{{item.title}}</text>
+          <text class="news-date">{{item.date}}</text>
+        </view>
+        <image wx:if="{{item.coverImage}}" class="news-thumb" src="{{item.coverImage}}" mode="aspectFill" />
+      </view>
+    </block>
+    <view wx:else class="empty-tip">暂无动态</view>
+  </view>
+
+  <!-- 3个附设栏目 -->
+  <view class="section-title">更多服务</view>
+  <view class="sub-nav">
+    <view class="sub-item" bindtap="goTo" data-url="/pages/campus-address/index">
+      <text class="sub-icon">📍</text>
+      <text class="sub-text">校区地址</text>
+    </view>
+    <view class="sub-item" bindtap="goTo" data-url="/pages/video/index">
+      <text class="sub-icon">🎬</text>
+      <text class="sub-text">视见合城</text>
+    </view>
+    <view class="sub-item" bindtap="goTo" data-url="/pages/media-links/index">
+      <text class="sub-icon">🔗</text>
+      <text class="sub-text">学校媒体链接</text>
+    </view>
+  </view>
+
+  <!-- 页脚 -->
+  <view class="footer">
+    <text>协力同心强党建 · 校企同频谱新篇</text>
+  </view>
+</view>

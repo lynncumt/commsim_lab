@@ -1,0 +1,31 @@
+<!-- 校企党建互助简介 -->
+<view class="container">
+  <view class="card">
+    <view class="card-header">
+      <text class="slogan">协力同心强党建 · 校企同频谱新篇</text>
+    </view>
+
+    <view class="section-block">
+      <view class="block-title">校企党建共建时代背景</view>
+      <rich-text nodes="{{data.background || '暂无内容'}}"></rich-text>
+    </view>
+
+    <view class="section-block">
+      <view class="block-title">解决企业党建六大需求</view>
+      <rich-text nodes="{{data.sixNeeds || '暂无内容'}}"></rich-text>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">校企党建互助共建项目</view>
+    <view class="project-list">
+      <view class="project-item" wx:for="{{projects}}" wx:key="index">
+        <view class="project-num">{{item.num}}</view>
+        <view class="project-info">
+          <text class="project-name">{{item.name}}</text>
+          <rich-text class="project-desc" nodes="{{item.desc}}"></rich-text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

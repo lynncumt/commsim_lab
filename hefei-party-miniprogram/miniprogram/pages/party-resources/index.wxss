@@ -1,0 +1,27 @@
+.section-title-red {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #c0191f;
+  border-left: 8rpx solid #c0191f;
+  padding-left: 16rpx;
+  margin-bottom: 20rpx;
+}
+
+.res-swiper {
+  width: 100%;
+  height: 320rpx;
+  border-radius: 10rpx;
+  overflow: hidden;
+  margin-bottom: 16rpx;
+}
+
+.res-img {
+  width: 100%;
+  height: 100%;
+}
+
+.res-content {
+  font-size: 28rpx;
+  color: #444;
+  line-height: 1.8;
+}

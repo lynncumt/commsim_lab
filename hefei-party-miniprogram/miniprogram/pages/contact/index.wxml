@@ -1,0 +1,69 @@
+<!-- 党建互助·联系我们 -->
+<view class="container">
+  <!-- 顶部标语 -->
+  <view class="header-banner">
+    <text class="header-title">协力同心强党建 · 校企同频谱新篇</text>
+    <text class="header-sub">校企党建互助共建促发展 · 请联系我们</text>
+  </view>
+
+  <!-- 需求选择 -->
+  <view class="card">
+    <view class="form-section-title">为了精准互助共建，请勾选贵司党建思政需求（可多选）</view>
+
+    <view wx:for="{{needCategories}}" wx:key="key" class="need-category">
+      <view class="need-cat-title">{{item.num}} {{item.name}}</view>
+      <view class="need-items">
+        <view
+          class="need-item {{selectedNeeds[need.id] ? 'selected' : ''}}"
+          wx:for="{{item.items}}"
+          wx:key="id"
+          wx:for-item="need"
+          bindtap="toggleNeed"
+          data-id="{{need.id}}"
+        >
+          <view class="checkbox {{selectedNeeds[need.id] ? 'checked' : ''}}">
+            <text wx:if="{{selectedNeeds[need.id]}}">✓</text>
+          </view>
+          <text class="need-label">{{need.label}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 联系信息表单 -->
+  <view class="card">
+    <view class="form-section-title">请告知您的信息</view>
+
+    <view class="form-item">
+      <text class="form-label">联系人 <text class="required">*</text></text>
+      <input class="form-input" placeholder="请输入联系人姓名" value="{{form.contactName}}" bindinput="onInput" data-field="contactName" />
+    </view>
+    <view class="form-item">
+      <text class="form-label">单位名称 <text class="required">*</text></text>
+      <input class="form-input" placeholder="请输入单位名称" value="{{form.orgName}}" bindinput="onInput" data-field="orgName" />
+    </view>
+    <view class="form-item">
+      <text class="form-label">联系方式 <text class="required">*</text></text>
+      <input class="form-input" placeholder="请输入手机号或邮箱" value="{{form.contactInfo}}" bindinput="onInput" data-field="contactInfo" type="text" />
+    </view>
+    <view class="form-item">
+      <text class="form-label">单位地址</text>
+      <input class="form-input" placeholder="请输入单位地址" value="{{form.address}}" bindinput="onInput" data-field="address" />
+    </view>
+    <view class="form-item">
+      <text class="form-label">从事领域</text>
+      <input class="form-input" placeholder="请输入从事行业或领域" value="{{form.field}}" bindinput="onInput" data-field="field" />
+    </view>
+    <view class="form-item">
+      <text class="form-label">留言</text>
+      <textarea class="form-textarea" placeholder="请输入留言或其他需求说明" value="{{form.message}}" bindinput="onInput" data-field="message"></textarea>
+    </view>
+  </view>
+
+  <!-- 提交按钮 -->
+  <button class="submit-btn" bindtap="submitForm" loading="{{submitting}}">
+    {{submitting ? '提交中...' : '提 交'}}
+  </button>
+
+  <view class="footer-tip">提交后我们将尽快与您联系</view>
+</view>

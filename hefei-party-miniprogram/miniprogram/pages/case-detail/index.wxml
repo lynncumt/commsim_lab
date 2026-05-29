@@ -1,0 +1,23 @@
+<!-- 案例详情 -->
+<view class="container">
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+  <view wx:else>
+    <view class="article-card card">
+      <text class="article-title">{{article.title}}</text>
+      <view class="article-meta">
+        <text class="article-date">{{article.dateStr}}</text>
+        <text wx:if="{{article.source}}" class="article-source">来源：{{article.source}}</text>
+      </view>
+      <image wx:if="{{article.coverImage}}" class="article-cover" src="{{article.coverImage}}" mode="widthFix" />
+      <view class="article-body">
+        <rich-text nodes="{{article.content}}"></rich-text>
+      </view>
+      <!-- 多图展示 -->
+      <view wx:if="{{article.images && article.images.length > 0}}" class="image-gallery">
+        <image wx:for="{{article.images}}" wx:key="index" src="{{item}}" mode="widthFix" class="gallery-img" bindtap="previewImage" data-src="{{item}}" data-list="{{article.images}}" />
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,95 @@
+.intro-swiper {
+  width: 100%;
+  height: 380rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+  margin-bottom: 20rpx;
+}
+
+.intro-img {
+  width: 100%;
+  height: 100%;
+}
+
+.intro-content {
+  font-size: 28rpx;
+  color: #444;
+  line-height: 1.8;
+  margin-top: 16rpx;
+}
+
+.card-title {
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #c0191f;
+  margin-bottom: 20rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #c0191f;
+  padding: 16rpx 0 12rpx;
+  display: flex;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.section-title::before {
+  content: '';
+  display: inline-block;
+  width: 8rpx;
+  height: 32rpx;
+  background: #c0191f;
+  border-radius: 4rpx;
+  margin-right: 12rpx;
+}
+
+.college-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.college-item {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.college-img {
+  width: 120rpx;
+  height: 100rpx;
+  border-radius: 10rpx;
+  flex-shrink: 0;
+}
+
+.college-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.college-name {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.college-desc {
+  font-size: 24rpx;
+  color: #666;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.arrow {
+  font-size: 40rpx;
+  color: #ccc;
+  flex-shrink: 0;
+}

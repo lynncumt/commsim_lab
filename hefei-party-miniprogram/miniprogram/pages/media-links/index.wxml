@@ -1,0 +1,17 @@
+<!-- 学校媒体链接 -->
+<view class="container">
+  <view class="header-banner">
+    <text class="banner-text">协力同心强党建 · 校企同频谱新篇</text>
+  </view>
+
+  <view class="media-list">
+    <view class="media-item card" wx:for="{{mediaLinks}}" wx:key="_id" bindtap="openLink" data-url="{{item.url}}" data-type="{{item.type}}">
+      <image class="media-icon" src="{{item.icon || '../../images/link-icon.png'}}" mode="aspectFit" />
+      <view class="media-info">
+        <text class="media-name">{{item.name}}</text>
+        <text class="media-desc">{{item.description}}</text>
+      </view>
+      <text class="media-arrow">›</text>
+    </view>
+  </view>
+</view>

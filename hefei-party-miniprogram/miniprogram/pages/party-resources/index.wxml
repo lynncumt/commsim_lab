@@ -1,0 +1,16 @@
+<!-- 学校党建思政资源 -->
+<view class="container">
+  <view class="card" wx:for="{{resourceSections}}" wx:key="key">
+    <view class="section-title-red">{{item.title}}</view>
+    <block wx:if="{{item.images && item.images.length > 0}}">
+      <swiper class="res-swiper" autoplay circular indicator-dots>
+        <swiper-item wx:for="{{item.images}}" wx:key="index" wx:for-item="img">
+          <image src="{{img}}" mode="aspectFill" class="res-img" />
+        </swiper-item>
+      </swiper>
+    </block>
+    <view class="res-content">
+      <rich-text nodes="{{item.content || '暂无内容'}}"></rich-text>
+    </view>
+  </view>
+</view>

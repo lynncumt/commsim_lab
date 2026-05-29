@@ -1,0 +1,47 @@
+<!-- 视见合城 -->
+<view class="video-page">
+  <!-- 单个视频播放（从课程等跳入时） -->
+  <block wx:if="{{singleUrl}}">
+    <video
+      id="myVideo"
+      src="{{singleUrl}}"
+      class="main-video"
+      controls
+      autoplay
+      bindended="onVideoEnd"
+    ></video>
+  </block>
+
+  <!-- 宣传片视频列表 -->
+  <block wx:else>
+    <view class="video-list">
+      <view class="video-item" wx:for="{{videos}}" wx:key="_id" bindtap="playVideo" data-url="{{item.url}}" data-index="{{index}}">
+        <view class="video-thumb-wrap">
+          <image class="video-thumb" src="{{item.coverImage || '../../images/video-placeholder.png'}}" mode="aspectFill" />
+          <view class="play-overlay">
+            <text class="play-icon">▶</text>
+          </view>
+        </view>
+        <view class="video-info">
+          <text class="video-title">{{item.title}}</text>
+          <text class="video-desc">{{item.description}}</text>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 全屏视频弹窗 -->
+  <view class="video-modal" wx:if="{{showPlayer}}">
+    <view class="modal-header" bindtap="closePlayer">
+      <text class="close-btn">✕ 关闭</text>
+    </view>
+    <video
+      id="popupVideo"
+      src="{{currentVideoUrl}}"
+      class="popup-video"
+      controls
+      autoplay
+      bindended="closePlayer"
+    ></video>
+  </view>
+</view>

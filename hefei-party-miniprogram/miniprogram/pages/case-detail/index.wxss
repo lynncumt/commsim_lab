@@ -1,0 +1,55 @@
+.article-card {
+  padding: 30rpx;
+}
+
+.article-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #222;
+  display: block;
+  margin-bottom: 16rpx;
+  line-height: 1.5;
+}
+
+.article-meta {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 24rpx;
+}
+
+.article-date, .article-source {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.article-cover {
+  width: 100%;
+  border-radius: 12rpx;
+  margin-bottom: 24rpx;
+}
+
+.article-body {
+  font-size: 30rpx;
+  color: #333;
+  line-height: 1.9;
+}
+
+.image-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 24rpx;
+}
+
+.gallery-img {
+  width: calc(50% - 6rpx);
+  border-radius: 8rpx;
+}
+
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60rpx;
+  color: #999;
+}

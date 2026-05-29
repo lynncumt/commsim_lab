@@ -1,0 +1,32 @@
+<!-- 党建思政专家库 -->
+<view class="container">
+  <view class="intro-card card">
+    <rich-text nodes="{{intro}}"></rich-text>
+  </view>
+
+  <view class="section-title">专家列表</view>
+
+  <view class="expert-grid">
+    <view class="expert-card" wx:for="{{experts}}" wx:key="_id" bindtap="viewExpert" data-index="{{index}}">
+      <image class="expert-avatar" src="{{item.avatar || '../../images/default-avatar.png'}}" mode="aspectFill" />
+      <view class="expert-info">
+        <text class="expert-name">{{item.name}}</text>
+        <text class="expert-title">{{item.title}}</text>
+        <text class="expert-brief">{{item.brief}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 专家详情弹窗 -->
+  <view class="modal-mask" wx:if="{{showModal}}" bindtap="closeModal">
+    <view class="modal-content" catchtap="">
+      <view class="modal-close" bindtap="closeModal">×</view>
+      <image class="modal-avatar" src="{{currentExpert.avatar || '../../images/default-avatar.png'}}" mode="aspectFill" />
+      <text class="modal-name">{{currentExpert.name}}</text>
+      <text class="modal-title">{{currentExpert.title}}</text>
+      <view class="modal-body">
+        <rich-text nodes="{{currentExpert.content || currentExpert.brief}}"></rich-text>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,30 @@
+<!-- 校区地址 -->
+<view class="container">
+  <view class="campus-card card" wx:for="{{campuses}}" wx:key="_id">
+    <view class="campus-header">
+      <text class="campus-icon">📍</text>
+      <text class="campus-name">{{item.name}}</text>
+    </view>
+    <image wx:if="{{item.image}}" src="{{item.image}}" class="campus-img" mode="aspectFill" />
+    <view class="campus-addr">
+      <text class="addr-text">{{item.address}}</text>
+    </view>
+    <view class="campus-actions">
+      <button class="map-btn" bindtap="openMap" data-lat="{{item.lat}}" data-lng="{{item.lng}}" data-name="{{item.name}}" data-address="{{item.address}}">
+        📍 高德导航
+      </button>
+    </view>
+  </view>
+
+  <!-- 联系信息 -->
+  <view class="contact-card card">
+    <view class="contact-item">
+      <text class="contact-label">邮编</text>
+      <text class="contact-value">{{contactInfo.postCode}}</text>
+    </view>
+    <view class="contact-item" wx:for="{{contactInfo.phones}}" wx:key="index" wx:for-item="phone">
+      <text class="contact-label">电话</text>
+      <text class="contact-value phone" bindtap="callPhone" data-phone="{{phone}}">{{phone}}</text>
+    </view>
+  </view>
+</view>

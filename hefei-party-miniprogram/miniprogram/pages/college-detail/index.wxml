@@ -1,0 +1,34 @@
+<!-- 学院详情 -->
+<view class="container">
+  <!-- 学院简介 -->
+  <view class="card">
+    <view class="card-title">{{college.name}}</view>
+    <block wx:if="{{college.images && college.images.length > 0}}">
+      <swiper class="college-swiper" autoplay circular indicator-dots>
+        <swiper-item wx:for="{{college.images}}" wx:key="index">
+          <image src="{{item}}" mode="aspectFill" class="swiper-img" />
+        </swiper-item>
+      </swiper>
+    </block>
+    <view class="content-text">
+      <rich-text nodes="{{college.content || '暂无介绍'}}"></rich-text>
+    </view>
+  </view>
+
+  <!-- 系部列表 -->
+  <view class="section-title">所含系部及专业</view>
+  <view wx:for="{{departments}}" wx:key="_id" class="dept-card card">
+    <view class="dept-header">
+      <text class="dept-name">{{item.name}}</text>
+    </view>
+    <view class="major-list">
+      <view class="major-item" wx:for="{{item.majors}}" wx:key="index" wx:for-item="major">
+        <text class="major-bullet">·</text>
+        <text class="major-name">{{major}}</text>
+      </view>
+    </view>
+    <view wx:if="{{item.intro}}" class="dept-intro">
+      <rich-text nodes="{{item.intro}}"></rich-text>
+    </view>
+  </view>
+</view>

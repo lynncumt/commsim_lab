@@ -1,0 +1,86 @@
+.campus-card {
+  margin-bottom: 20rpx;
+}
+
+.campus-header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.campus-icon {
+  font-size: 36rpx;
+}
+
+.campus-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #c0191f;
+}
+
+.campus-img {
+  width: 100%;
+  height: 280rpx;
+  border-radius: 10rpx;
+  margin-bottom: 16rpx;
+}
+
+.campus-addr {
+  margin-bottom: 16rpx;
+}
+
+.addr-text {
+  font-size: 28rpx;
+  color: #555;
+  line-height: 1.7;
+}
+
+.campus-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.map-btn {
+  background: #c0191f;
+  color: #fff;
+  border-radius: 30rpx;
+  font-size: 26rpx;
+  padding: 14rpx 30rpx;
+  border: none;
+}
+
+.map-btn::after {
+  border: none;
+}
+
+.contact-card {
+  margin-bottom: 20rpx;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.contact-item:last-child {
+  border-bottom: none;
+}
+
+.contact-label {
+  font-size: 26rpx;
+  color: #999;
+  width: 80rpx;
+}
+
+.contact-value {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.contact-value.phone {
+  color: #c0191f;
+  text-decoration: underline;
+}
