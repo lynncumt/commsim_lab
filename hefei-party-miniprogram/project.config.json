@@ -40,8 +40,9 @@
   },
   "compileType": "miniprogram",
   "libVersion": "2.19.4",
-  "appid": "your-appid-here",
+  "appid": "wx405a051873650576",
   "projectname": "hefei-party-miniprogram",
-  "condition": {},
-  "cloudfunctionRoot": "cloudfunctions/"
+  "miniprogramRoot": "miniprogram/",
+  "cloudfunctionRoot": "cloudfunctions/",
+  "condition": {}
 }
