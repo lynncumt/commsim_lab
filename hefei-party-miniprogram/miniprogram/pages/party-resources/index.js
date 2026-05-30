@@ -1,5 +1,5 @@
 // 学校党建思政资源
-const db = wx.cloud.database();
+
 
 Page({
   data: {
@@ -16,6 +16,7 @@ Page({
   },
 
   async loadData() {
+    const db = wx.cloud.database();
     wx.showLoading({ title: '加载中...' });
     try {
       const res = await db.collection('party_resources').limit(1).get();

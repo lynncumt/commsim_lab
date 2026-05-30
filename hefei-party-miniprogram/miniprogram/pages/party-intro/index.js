@@ -1,5 +1,5 @@
 // 校企党建互助简介
-const db = wx.cloud.database();
+
 
 Page({
   data: {
@@ -18,6 +18,7 @@ Page({
   },
 
   async loadData() {
+    const db = wx.cloud.database();
     wx.showLoading({ title: '加载中...' });
     try {
       const res = await db.collection('party_intro').limit(1).get();

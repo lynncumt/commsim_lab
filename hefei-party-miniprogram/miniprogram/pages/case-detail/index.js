@@ -1,5 +1,5 @@
 // 案例详情
-const db = wx.cloud.database();
+
 
 Page({
   data: {
@@ -13,6 +13,7 @@ Page({
   },
 
   async loadArticle(id) {
+    const db = wx.cloud.database();
     try {
       const res = await db.collection('cases').doc(id).get();
       const data = res.data;

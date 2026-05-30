@@ -1,5 +1,5 @@
 // 党建互助·联系我们
-const db = wx.cloud.database();
+
 
 Page({
   data: {
@@ -80,6 +80,7 @@ Page({
   },
 
   async submitForm() {
+    const db = wx.cloud.database();
     const { form, selectedNeeds, needCategories } = this.data;
 
     if (!form.contactName.trim()) {

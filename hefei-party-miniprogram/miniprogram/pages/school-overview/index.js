@@ -1,5 +1,5 @@
 // 学校概况
-const db = wx.cloud.database();
+
 
 Page({
   data: {
@@ -12,6 +12,7 @@ Page({
   },
 
   async loadData() {
+    const db = wx.cloud.database();
     wx.showLoading({ title: '加载中...' });
     try {
       const [overviewRes, collegesRes] = await Promise.all([

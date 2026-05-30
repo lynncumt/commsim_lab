@@ -1,5 +1,5 @@
 // 学校媒体链接
-const db = wx.cloud.database();
+
 
 Page({
   data: {
@@ -11,6 +11,7 @@ Page({
   },
 
   async loadData() {
+    const db = wx.cloud.database();
     wx.showLoading({ title: '加载中...' });
     try {
       const res = await db.collection('media_links').orderBy('sortOrder', 'asc').get();

@@ -1,5 +1,5 @@
 // 校企党建互助案例采撷
-const db = wx.cloud.database();
+
 const PAGE_SIZE = 10;
 
 Page({
@@ -15,6 +15,7 @@ Page({
   },
 
   async loadCases(reset = false) {
+    const db = wx.cloud.database();
     const page = reset ? 0 : this.data.page;
     try {
       const res = await db.collection('cases')

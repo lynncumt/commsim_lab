@@ -1,5 +1,5 @@
 // 视见合城
-const db = wx.cloud.database();
+
 
 Page({
   data: {
@@ -28,6 +28,7 @@ Page({
   },
 
   async loadVideos() {
+    const db = wx.cloud.database();
     wx.showLoading({ title: '加载中...' });
     try {
       const res = await db.collection('videos').orderBy('sortOrder', 'asc').get();

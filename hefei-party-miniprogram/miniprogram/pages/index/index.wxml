@@ -1,10 +1,10 @@
 <!-- 首页 -->
 <view class="index-container">
 
-  <!-- 顶部 Banner -->
+  <!-- 顶部 Banner：纯CSS渐变兜底，有banner.png时自动显示图片 -->
   <view class="banner">
-    <image class="banner-img" src="../../images/banner.png" mode="widthFix" />
-    <view class="banner-overlay">
+    <image class="banner-bg" src="../../images/banner.png" mode="aspectFill" />
+    <view class="banner-content">
       <text class="banner-title">合肥城市学院</text>
       <text class="banner-subtitle">校企党建互助</text>
     </view>
@@ -12,63 +12,60 @@
 
   <!-- 7个主要模块：竖向列表 -->
   <view class="module-list">
+
     <view class="module-item" bindtap="goTo" data-url="/pages/school-overview/index">
-      <view class="module-left">
-        <view class="module-dot"></view>
-        <text class="module-name">合肥城市学院概况</text>
-      </view>
+      <view class="module-icon-wrap"><text class="module-icon">🏫</text></view>
+      <text class="module-name">合肥城市学院概况</text>
       <text class="module-arrow">›</text>
     </view>
+
     <view class="module-item" bindtap="goTo" data-url="/pages/party-intro/index">
-      <view class="module-left">
-        <view class="module-dot"></view>
-        <text class="module-name">校企党建互助简介</text>
-      </view>
+      <view class="module-icon-wrap"><text class="module-icon">🤝</text></view>
+      <text class="module-name">校企党建互助简介</text>
       <text class="module-arrow">›</text>
     </view>
+
     <view class="module-item" bindtap="goTo" data-url="/pages/party-resources/index">
-      <view class="module-left">
-        <view class="module-dot"></view>
-        <text class="module-name">学校党建思政资源</text>
-      </view>
+      <view class="module-icon-wrap"><text class="module-icon">📚</text></view>
+      <text class="module-name">学校党建思政资源</text>
       <text class="module-arrow">›</text>
     </view>
+
     <view class="module-item" bindtap="goTo" data-url="/pages/expert-database/index">
-      <view class="module-left">
-        <view class="module-dot"></view>
-        <text class="module-name">学校党建思政专家库</text>
-      </view>
+      <view class="module-icon-wrap"><text class="module-icon">👨‍🏫</text></view>
+      <text class="module-name">学校党建思政专家库</text>
       <text class="module-arrow">›</text>
     </view>
+
     <view class="module-item" bindtap="goTo" data-url="/pages/courses/index">
-      <view class="module-left">
-        <view class="module-dot"></view>
-        <text class="module-name">党建思政精品课程库</text>
-      </view>
+      <view class="module-icon-wrap"><text class="module-icon">🎓</text></view>
+      <text class="module-name">党建思政精品课程库</text>
       <text class="module-arrow">›</text>
     </view>
+
     <view class="module-item" bindtap="goTo" data-url="/pages/cases/index">
-      <view class="module-left">
-        <view class="module-dot"></view>
-        <text class="module-name">校企党建互助案例采撷</text>
-      </view>
+      <view class="module-icon-wrap"><text class="module-icon">📰</text></view>
+      <text class="module-name">校企党建互助案例采撷</text>
       <text class="module-arrow">›</text>
     </view>
+
     <view class="module-item last" bindtap="goTo" data-url="/pages/contact/index">
-      <view class="module-left">
-        <view class="module-dot"></view>
-        <text class="module-name">党建互助 · 联系我们</text>
-      </view>
+      <view class="module-icon-wrap"><text class="module-icon">📬</text></view>
+      <text class="module-name">党建互助 · 联系我们</text>
       <text class="module-arrow">›</text>
     </view>
+
   </view>
 
   <!-- 合城动态 -->
   <view class="section-header">
     <text class="section-title">合城动态</text>
   </view>
-  <view class="news-list">
-    <view class="news-loading" wx:if="{{loading}}">加载中...</view>
+
+  <view class="news-wrap">
+    <view class="news-loading" wx:if="{{loading}}">
+      <text>加载中...</text>
+    </view>
     <block wx:elif="{{newsList.length > 0}}">
       <view
         class="news-item"
@@ -82,9 +79,12 @@
           <text class="news-title">{{item.title}}</text>
           <text class="news-date">{{item.date}}</text>
         </view>
+        <text class="news-arrow">›</text>
       </view>
     </block>
     <view wx:else class="news-empty">暂无动态</view>
   </view>
+
+  <view class="footer-slogan">协力同心强党建 · 校企同频谱新篇</view>
 
 </view>

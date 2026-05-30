@@ -1,5 +1,5 @@
 // 校区地址
-const db = wx.cloud.database();
+
 
 Page({
   data: {
@@ -15,6 +15,7 @@ Page({
   },
 
   async loadData() {
+    const db = wx.cloud.database();
     wx.showLoading({ title: '加载中...' });
     try {
       const [campusRes, contactRes] = await Promise.all([
