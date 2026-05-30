@@ -22,10 +22,22 @@ Page({
         expertsRes = await db.collection('experts').get();
       }
       const introRes = await db.collection('expert_intro').limit(1).get();
-      console.log('[experts] count:', (expertsRes.data || []).length, expertsRes.data);
+      const experts = expertsRes.data || [];
+      // 将 cloud:// 路径转为可访问的 HTTPS URL
+      const cloudFileIds = experts.map(e => e.avatar).filter(a => a && a.startsWith('cloud://'));
+      if (cloudFileIds.length > 0) {
+        try {
+          const { fileList } = await wx.cloud.getTempFileURL({ fileList: cloudFileIds });
+          const urlMap = {};
+          fileList.forEach(f => { urlMap[f.fileID] = f.tempFileURL; });
+          experts.forEach(e => { if (urlMap[e.avatar]) e.avatar = urlMap[e.avatar]; });
+        } catch (e) {
+          console.error('[头像URL转换失败]', e);
+        }
+      }
       this.setData({
         intro: introRes.data[0]?.content || '',
-        experts: expertsRes.data || []
+        experts
       });
     } catch (e) {
       console.error('[专家库加载失败]', e.errMsg || e);
