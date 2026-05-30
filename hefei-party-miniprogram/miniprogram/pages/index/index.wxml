@@ -1,7 +1,7 @@
 <!-- 首页 -->
 <view class="index-container">
 
-  <!-- 顶部 Banner：纯CSS渐变兜底，有banner.png时自动显示图片 -->
+  <!-- 顶部 Banner -->
   <view class="banner">
     <image class="banner-bg" src="../../images/banner.png" mode="aspectFill" />
     <view class="banner-content">
@@ -10,47 +10,47 @@
     </view>
   </view>
 
-  <!-- 7个主要模块：竖向列表 -->
+  <!-- 7个主要模块：纯文字竖向列表，符合文档示意图 -->
   <view class="module-list">
 
     <view class="module-item" bindtap="goTo" data-url="/pages/school-overview/index">
-      <view class="module-icon-wrap"><text class="module-icon">🏫</text></view>
+      <view class="module-bar"></view>
       <text class="module-name">合肥城市学院概况</text>
       <text class="module-arrow">›</text>
     </view>
 
     <view class="module-item" bindtap="goTo" data-url="/pages/party-intro/index">
-      <view class="module-icon-wrap"><text class="module-icon">🤝</text></view>
+      <view class="module-bar"></view>
       <text class="module-name">校企党建互助简介</text>
       <text class="module-arrow">›</text>
     </view>
 
     <view class="module-item" bindtap="goTo" data-url="/pages/party-resources/index">
-      <view class="module-icon-wrap"><text class="module-icon">📚</text></view>
+      <view class="module-bar"></view>
       <text class="module-name">学校党建思政资源</text>
       <text class="module-arrow">›</text>
     </view>
 
     <view class="module-item" bindtap="goTo" data-url="/pages/expert-database/index">
-      <view class="module-icon-wrap"><text class="module-icon">👨‍🏫</text></view>
+      <view class="module-bar"></view>
       <text class="module-name">学校党建思政专家库</text>
       <text class="module-arrow">›</text>
     </view>
 
     <view class="module-item" bindtap="goTo" data-url="/pages/courses/index">
-      <view class="module-icon-wrap"><text class="module-icon">🎓</text></view>
+      <view class="module-bar"></view>
       <text class="module-name">党建思政精品课程库</text>
       <text class="module-arrow">›</text>
     </view>
 
     <view class="module-item" bindtap="goTo" data-url="/pages/cases/index">
-      <view class="module-icon-wrap"><text class="module-icon">📰</text></view>
+      <view class="module-bar"></view>
       <text class="module-name">校企党建互助案例采撷</text>
       <text class="module-arrow">›</text>
     </view>
 
     <view class="module-item last" bindtap="goTo" data-url="/pages/contact/index">
-      <view class="module-icon-wrap"><text class="module-icon">📬</text></view>
+      <view class="module-bar"></view>
       <text class="module-name">党建互助 · 联系我们</text>
       <text class="module-arrow">›</text>
     </view>
@@ -59,6 +59,7 @@
 
   <!-- 合城动态 -->
   <view class="section-header">
+    <view class="section-bar"></view>
     <text class="section-title">合城动态</text>
   </view>
 
