@@ -34,10 +34,22 @@
         "selectedIconPath": "images/tab-home-active.png"
       },
       {
-        "pagePath": "pages/contact/index",
-        "text": "联系我们",
-        "iconPath": "images/tab-contact.png",
-        "selectedIconPath": "images/tab-contact-active.png"
+        "pagePath": "pages/campus-address/index",
+        "text": "校区地址",
+        "iconPath": "images/tab-address.png",
+        "selectedIconPath": "images/tab-address-active.png"
+      },
+      {
+        "pagePath": "pages/video/index",
+        "text": "视见合城",
+        "iconPath": "images/tab-video.png",
+        "selectedIconPath": "images/tab-video-active.png"
+      },
+      {
+        "pagePath": "pages/media-links/index",
+        "text": "学校媒体链接",
+        "iconPath": "images/tab-media.png",
+        "selectedIconPath": "images/tab-media-active.png"
       }
     ]
   },
