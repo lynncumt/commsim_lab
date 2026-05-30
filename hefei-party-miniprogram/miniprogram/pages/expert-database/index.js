@@ -17,16 +17,19 @@ Page({
     const db = wx.cloud.database();
     wx.showLoading({ title: '加载中...' });
     try {
-      const [introRes, expertsRes] = await Promise.all([
-        db.collection('expert_intro').limit(1).get(),
-        db.collection('experts').orderBy('sortOrder', 'asc').get()
-      ]);
+      let expertsRes;
+      try {
+        expertsRes = await db.collection('experts').orderBy('sortOrder', 'asc').get();
+      } catch (e) {
+        expertsRes = await db.collection('experts').get();
+      }
+      const introRes = await db.collection('expert_intro').limit(1).get();
       this.setData({
         intro: introRes.data[0]?.content || '',
-        experts: expertsRes.data
+        experts: expertsRes.data || []
       });
     } catch (e) {
-      console.error(e);
+      console.error('[专家库加载失败]', e.errMsg || e);
       wx.showToast({ title: '加载失败', icon: 'none' });
     } finally {
       wx.hideLoading();
