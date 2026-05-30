@@ -30,26 +30,26 @@
       {
         "pagePath": "pages/index/index",
         "text": "首页",
-        "iconPath": "images/tab-home.png",
-        "selectedIconPath": "images/tab-home-active.png"
+        "iconPath": "assets/icons/home.png",
+        "selectedIconPath": "assets/icons/home-active.png"
       },
       {
         "pagePath": "pages/campus-address/index",
         "text": "校区地址",
-        "iconPath": "images/tab-address.png",
-        "selectedIconPath": "images/tab-address-active.png"
+        "iconPath": "assets/icons/map.png",
+        "selectedIconPath": "assets/icons/map-active.png"
       },
       {
         "pagePath": "pages/video/index",
         "text": "视见合城",
-        "iconPath": "images/tab-video.png",
-        "selectedIconPath": "images/tab-video-active.png"
+        "iconPath": "assets/icons/gallery.png",
+        "selectedIconPath": "assets/icons/gallery-active.png"
       },
       {
         "pagePath": "pages/media-links/index",
         "text": "学校媒体链接",
-        "iconPath": "images/tab-media.png",
-        "selectedIconPath": "images/tab-media-active.png"
+        "iconPath": "assets/icons/media.png",
+        "selectedIconPath": "assets/icons/media-active.png"
       }
     ]
   },
