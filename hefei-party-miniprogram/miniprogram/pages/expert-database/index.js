@@ -23,18 +23,27 @@ Page({
       }
       const introRes = await db.collection('expert_intro').limit(1).get();
       const experts = expertsRes.data || [];
-      // 将 cloud:// 路径转为可访问的 HTTPS URL
-      const cloudFileIds = experts.map(e => e.avatar).filter(a => a && a.startsWith('cloud://'));
+
+      const cloudFileIds = experts
+        .map(e => e.avatar)
+        .filter(a => a && a.startsWith('cloud://'));
+
+      console.log('[avatar cloudFileIds]', cloudFileIds);
+
       if (cloudFileIds.length > 0) {
         try {
           const { fileList } = await wx.cloud.getTempFileURL({ fileList: cloudFileIds });
+          console.log('[avatar fileList]', JSON.stringify(fileList));
           const urlMap = {};
           fileList.forEach(f => { urlMap[f.fileID] = f.tempFileURL; });
           experts.forEach(e => { if (urlMap[e.avatar]) e.avatar = urlMap[e.avatar]; });
-        } catch (e) {
-          console.error('[头像URL转换失败]', e);
+        } catch (err) {
+          console.error('[头像URL转换失败]', err);
         }
       }
+
+      console.log('[experts avatars]', JSON.stringify(experts.map(e => ({ name: e.name, avatar: e.avatar }))));
+
       this.setData({
         intro: introRes.data[0]?.content || '',
         experts
