@@ -22,6 +22,7 @@ Page({
         expertsRes = await db.collection('experts').get();
       }
       const introRes = await db.collection('expert_intro').limit(1).get();
+      console.log('[experts] count:', (expertsRes.data || []).length, expertsRes.data);
       this.setData({
         intro: introRes.data[0]?.content || '',
         experts: expertsRes.data || []
